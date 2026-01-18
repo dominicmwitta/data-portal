@@ -75,7 +75,7 @@ def get_data(
     connection,
     data_group: str,
     start_year=2020,
-    end_year=2023,
+    end_year=2030,
     start_month=None,
     end_month=None,
     location='Tanzania',
@@ -112,6 +112,13 @@ def get_data(
         return pd.DataFrame()
 
     fact_table = map_table[data_group]
+    
+    # Determine aggregation function based on data type
+    # CPI: flows are averaged, BOP: flows are summed
+    if data_group == 'BOP':
+        flow_agg = 'SUM'  # BOP flows should be summed
+    else:
+        flow_agg = 'AVG'  # CPI flows should be averaged
 
     # Build query based on aggregation level
     if aggregation == 'monthly':
@@ -138,7 +145,7 @@ def get_data(
         """
     
     elif aggregation == 'quarterly':
-        # Quarterly: aggregate flows (AVG), take end-of-quarter for stocks
+        # Quarterly: aggregate flows (SUM for BOP, AVG for CPI), take end-of-quarter for stocks
         query = f"""
             SELECT 
                 t.YEAR || 'Q' || t.QUARTER AS TIME_PERIOD,
@@ -149,9 +156,9 @@ def get_data(
                 i.INDICATOR_TYPE,
                 i.DESCRIPTION,
                 CASE 
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN AVG(f.VALUE)
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN {flow_agg}(f.VALUE)
                     WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.IS_QUARTER_END = 1 THEN f.VALUE END)
-                    ELSE AVG(f.VALUE)
+                    ELSE {flow_agg}(f.VALUE)
                 END AS VALUE,
                 u.UNIT
             FROM {fact_table} f
@@ -180,9 +187,9 @@ def get_data(
                 i.INDICATOR_TYPE,
                 i.DESCRIPTION,
                 CASE 
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN AVG(f.VALUE)
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN {flow_agg}(f.VALUE)
                     WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.MONTH = 6 THEN f.VALUE END)
-                    ELSE AVG(f.VALUE)
+                    ELSE {flow_agg}(f.VALUE)
                 END AS VALUE,
                 u.UNIT
             FROM {fact_table} f
@@ -199,7 +206,7 @@ def get_data(
         """
     
     else:  # annual
-        # Annual: aggregate flows (AVG), take year-end for stocks
+        # Annual: aggregate flows (SUM for BOP, AVG for CPI), take year-end for stocks
         query = f"""
             SELECT 
                 t.YEAR AS TIME_PERIOD,
@@ -209,9 +216,9 @@ def get_data(
                 i.INDICATOR_TYPE,
                 i.DESCRIPTION,
                 CASE 
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN AVG(f.VALUE)
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN {flow_agg}(f.VALUE)
                     WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.MONTH = 12 THEN f.VALUE END)
-                    ELSE AVG(f.VALUE)
+                    ELSE {flow_agg}(f.VALUE)
                 END AS VALUE,
                 u.UNIT
             FROM {fact_table} f

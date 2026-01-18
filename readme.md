@@ -96,9 +96,6 @@ recursive-include economic_dashboard *.py
 
 ### Step 1: Organize Your Files
 
-Move your current app code into the structure above:
-- Main Streamlit code → `economic_dashboard/app.py`
-- Split functions into appropriate modules if needed
 
 ### Step 2: Build the Package
 
@@ -158,7 +155,7 @@ pip install economic-indicators-dashboard
 **Option C: Private GitHub repository**
 ```bash
 # Users install with:
-pip install git+https://github.com/y
+pip install git+https://github.com/dominicmwitta/data-portal.git
 ```
 
 ## 📋 Distribution Checklist

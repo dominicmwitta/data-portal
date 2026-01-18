@@ -1,3 +1,6 @@
+MANIFEST.in
+README.md
+requirements.txt
 setup.py
 economic_dashboard/__init__.py
 economic_dashboard/app.py
