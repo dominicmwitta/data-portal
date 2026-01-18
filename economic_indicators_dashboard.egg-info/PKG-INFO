@@ -1,0 +1,207 @@
+Metadata-Version: 2.1
+Name: economic-indicators-dashboard
+Version: 1.0.0
+Summary: A Streamlit dashboard for CPI and Balance of Payments data
+Home-page: https://github.com/dominicmwitta/macrodatabase
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: Topic :: Office/Business :: Financial
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: streamlit>=1.28.0
+Requires-Dist: oracledb>=1.4.0
+Requires-Dist: pandas>=2.0.0
+
+# Economic Indicators Dashboard
+
+A Streamlit-based dashboard for exploring Consumer Price Index (CPI) and Balance of Payments (BOP) data from Oracle databases.
+
+## Features
+
+- 📊 Interactive data visualization
+- 🗓️ Calendar-based date filtering
+- 📈 Multiple aggregation levels (monthly, quarterly, annual)
+- 💾 CSV export functionality
+- 🔍 Indicator filtering
+- 🔐 Secure database connection
+
+## Installation
+
+### Quick Install
+
+```bash
+pip install economic-indicators-dashboard
+```
+
+### From Source
+
+```bash
+git clone https://github.com/yourusername/economic-indicators-dashboard.git
+cd economic-indicators-dashboard
+pip install -e .
+```
+
+## Usage
+
+### Command Line
+
+After installation, run:
+
+```bash
+economic-dashboard
+```
+
+### Create Desktop Shortcut
+
+**Windows:**
+```bash
+python -m economic_dashboard.scripts.create_shortcut_windows
+```
+
+**Linux/Mac:**
+```bash
+python -m economic_dashboard.scripts.create_shortcut_linux
+```
+
+## Database Setup
+
+The dashboard requires an Oracle database with the following schema:
+
+- `FACT_CPI` - CPI fact table
+- `FACT_BOP` - Balance of Payments fact table
+- `DIM_TIME` - Time dimension
+- `DIM_LOCATION` - Location dimension
+- `DIM_INDICATOR` - Indicator dimension
+- `DIM_UNITS` - Units dimension
+
+## Configuration
+
+On first run, you'll be prompted to enter:
+- Oracle username
+- Password
+- DSN (hostname:port/service_name)
+
+## Requirements
+
+- Python 3.8+
+- Streamlit 1.28+
+- oracledb 1.4+
+- pandas 2.0+
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Support
+
+For issues and questions, please visit: https://github.com/yourusername/economic-indicators-dashboard/issues
+```
+
+### 8. `MANIFEST.in`
+
+```
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include economic_dashboard *.py
+```
+
+## 🚀 Installation & Distribution Steps
+
+### Step 1: Organize Your Files
+
+Move your current app code into the structure above:
+- Main Streamlit code → `economic_dashboard/app.py`
+- Split functions into appropriate modules if needed
+
+### Step 2: Build the Package
+
+```bash
+# Install build tools
+pip install build twine
+
+# Build the package
+python -m build
+```
+
+This creates:
+- `dist/economic-indicators-dashboard-1.0.0.tar.gz`
+- `dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl`
+
+### Step 3: Install Locally
+
+```bash
+# Install in development mode (for testing)
+pip install -e .
+
+# Or install from wheel
+pip install dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl
+```
+
+### Step 4: Create Desktop Shortcut
+
+**Windows:**
+```bash
+pip install pywin32 winshell
+python scripts/create_shortcut_windows.py
+```
+
+**Linux:**
+```bash
+python scripts/create_shortcut_linux.py
+```
+
+### Step 5: Distribute
+
+**Option A: Share the wheel file**
+```bash
+# Users install with:
+pip install economic_indicators_dashboard-1.0.0-py3-none-any.whl
+```
+
+**Option B: Upload to PyPI**
+```bash
+# Create account at https://pypi.org
+# Upload package
+python -m twine upload dist/*
+
+# Users install with:
+pip install economic-indicators-dashboard
+```
+
+**Option C: Private GitHub repository**
+```bash
+# Users install with:
+pip install git+https://github.com/y
+```
+
+## 📋 Distribution Checklist
+
+- [ ] Test package installation in clean environment
+- [ ] Create comprehensive README with screenshots
+- [ ] Add LICENSE file (MIT recommended)
+- [ ] Test desktop shortcuts on target OS
+- [ ] Document database requirements
+- [ ] Create example configuration file
+- [ ] Add version number in code
+- [ ] Test on Windows, Linux, Mac if possible
+
+## 🎯 Quick Start for End Users
+
+After you distribute the package, users only need to:
+
+1. Install Python 3.8+
+2. Run: `pip install economic-indicators-dashboard`
+3. Run: `economic-dashboard`
+4. (Optional) Create desktop shortcut using the script
+
+That's it! 🎉

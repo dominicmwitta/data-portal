@@ -1,0 +1,2 @@
+[console_scripts]
+economic-dashboard = economic_dashboard.run:main
