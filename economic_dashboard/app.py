@@ -1,6 +1,6 @@
 """
 app.py - Modern Economic Indicators Dashboard (CPI & BOP) with Plotly charts
-Enhanced version with improved UI/UX and error handling
+Enhanced version with improved UI/UX and updated connection style
 """
 
 import streamlit as st
@@ -142,7 +142,7 @@ st.markdown("""
             📊 Macroeconomic Database Explorer
         </h1>
         <p style="color: #64748b; font-size: 1.2rem; margin-top: 0.5rem; font-weight: 400;">
-            Bank of Tanzania  Hub for Macroeconomic and Financial Statistics
+            Bank of Tanzania Hub for Macroeconomic and Financial Statistics
         </p>
     </div>
 """, unsafe_allow_html=True)
@@ -162,28 +162,41 @@ if not st.session_state.connected:
         col1, col2 = st.columns(2)
         
         with col1:
-            username = st.text_input("Username", value="SYSTEM", placeholder="Enter username")
-            dsn = st.text_input("DSN", value="localhost:1521/XE", 
-                               help="Format: hostname:port/service_name",
-                               placeholder="localhost:1521/XE")
+            username = st.text_input("Username", value="", placeholder="Enter username")
+            host = st.text_input("Host", value="172.16.1.219", 
+                               help="Database server hostname or IP",
+                               placeholder="172.16.1.219")
+            port = st.number_input("Port", value=1522, min_value=1, max_value=65535,
+                                 help="Database port number")
         with col2:
             password = st.text_input("Password", type="password", placeholder="Enter password")
-            st.write("")  # Spacing
+            service_name = st.text_input("Service Name", value="BOT6DB",
+                                       help="Database service name",
+                                       placeholder="BOT6DB")
             st.write("")  # Spacing
         
         submitted = st.form_submit_button("🔌 Connect to Database", type="primary", use_container_width=True)
         
         if submitted:
-            if username and password and dsn:
+            if username and password and host and service_name:
                 with st.spinner("Connecting to database..."):
-                    conn = get_oracle_connection(username, password, dsn)
-                    if conn:
-                        st.session_state.connected = True
-                        st.session_state.conn = conn
-                        st.success("✅ Connected successfully!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Connection failed. Please check your credentials.")
+                    try:
+                        conn = get_oracle_connection(username, password, host, int(port), service_name)
+                        if conn:
+                            st.session_state.connected = True
+                            st.session_state.conn = conn
+                            st.session_state.connection_info = {
+                                'username': username,
+                                'host': host,
+                                'port': port,
+                                'service_name': service_name
+                            }
+                            st.success("✅ Connected successfully!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Connection failed. Please check your credentials.")
+                    except Exception as e:
+                        st.error(f"❌ Connection error: {str(e)}")
             else:
                 st.error("⚠️ All fields are required.")
     st.stop()
@@ -275,7 +288,6 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
     
     # Show indicator descriptions if available
     if 'DESCRIPTION' in df.columns:
-        # Get unique indicators with their descriptions
         indicator_desc = df[['INDICATOR_NAME', 'DESCRIPTION']].drop_duplicates() if 'INDICATOR_NAME' in df.columns else pd.DataFrame()
         
         if not indicator_desc.empty and indicator_desc['DESCRIPTION'].notna().any():
@@ -288,21 +300,18 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
                                 <div style='color: #64748b; font-size: 0.9rem;'>{row['DESCRIPTION']}</div>
                             </div>
                         """, unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"**{row['INDICATOR_NAME']}** — *Description not available*")
 
     st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
 
     # Enhanced Plotly chart
     if time_col and len(numeric) > 0:
-        # Prepare data for plotting
         id_vars = [time_col]
         if "LOCATION_NAME" in df.columns: 
             id_vars.append("LOCATION_NAME")
         elif "LOCATION" in df.columns:
             id_vars.append("LOCATION")
             
-        value_vars = [c for c in df.columns if c not in id_vars + ["UNIT", "INDICATOR_CODE", "LOCATION_CODE"]]
+        value_vars = [c for c in df.columns if c not in id_vars + ["UNIT_NAME", "INDICATOR_CODE", "LOCATION_CODE", "DESCRIPTION"]]
 
         if value_vars:
             df_long = pd.melt(df, id_vars=id_vars, value_vars=value_vars,
@@ -310,7 +319,6 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
             df_long = df_long.dropna(subset=["Value"])
             df_long = df_long.sort_values(time_col)
 
-            # Create enhanced line chart
             fig = px.line(
                 df_long, 
                 x=time_col, 
@@ -321,7 +329,6 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
                 height=600
             )
 
-            # Enhanced styling with better legend positioning
             fig.update_layout(
                 hovermode="x unified",
                 legend=dict(
@@ -346,24 +353,12 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
                 title_x=0.02
             )
             
-            # Grid styling
-            fig.update_xaxes(
-                showgrid=True, 
-                gridwidth=1, 
-                gridcolor='rgba(0,0,0,0.05)',
-                tickangle=-45
-            )
-            fig.update_yaxes(
-                showgrid=True, 
-                gridwidth=1, 
-                gridcolor='rgba(0,0,0,0.05)'
-            )
+            fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.05)', tickangle=-45)
+            fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.05)')
 
-            # Format large numbers
             if df_long["Value"].max() > 1e6:
                 fig.update_yaxes(tickformat=",")
 
-            # Enhanced hover template
             fig.update_traces(
                 hovertemplate="<b>%{fullData.name}</b><br>" +
                              time_col + ": %{x}<br>" +
@@ -377,22 +372,14 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
 
     # Data table with enhanced display
     with st.expander("📋 View Raw Data & Download", expanded=False):
-        # Format and display table
         display_df = df.copy()
         
-        # Format numeric columns
         for col in numeric:
             if display_df[col].dtype in ['float64', 'float32']:
                 display_df[col] = display_df[col].apply(lambda x: f"{x:,.2f}" if pd.notnull(x) else "—")
         
-        st.dataframe(
-            display_df,
-            use_container_width=True, 
-            hide_index=True,
-            height=400
-        )
+        st.dataframe(display_df, use_container_width=True, hide_index=True, height=400)
         
-        # Download buttons
         col_dl1, col_dl2 = st.columns(2)
         with col_dl1:
             csv = df.to_csv(index=False).encode('utf-8')
@@ -404,8 +391,6 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
                 use_container_width=True
             )
         with col_dl2:
-            # Create Excel file in memory
-            from io import BytesIO
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, sheet_name='Data')
@@ -513,18 +498,13 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 help=f"Select specific {indicator_type} indicators to display"
             )
 
-            # Conditional units based on indicator type
             if indicator_type == "BOP":
-                # Restricted units for BOP - using exact database names
                 bop_units = ["USD Million", "TZS Million"]
-                # Filter to only include units that exist in the database
                 available_bop_units = [u for u in units if u in bop_units] if units else []
                 
-                # If no matching units found in database, use the hardcoded list as fallback
                 if not available_bop_units:
                     available_bop_units = bop_units
                 
-                # Set default to USD Million if available
                 default_unit = ["USD Million"] if "USD Million" in available_bop_units else (
                     [available_bop_units[0]] if available_bop_units else []
                 )
@@ -538,7 +518,6 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                     help="Balance of Payments data in USD Million or TZS Million"
                 )
             else:
-                # All units for other indicators (CPI, etc.)
                 selected_units = st.multiselect(
                     "Units",
                     options=units,
@@ -548,11 +527,9 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                     help="Filter by measurement units (e.g., Index, %, TZS, USD Million)"
                 )
     
-    # Show selected indicator descriptions if any are selected
     if selected_indicators:
         with st.expander("📋 Selected Indicator Descriptions", expanded=False):
             try:
-                # Get descriptions for selected indicators
                 placeholders = ','.join([f':ind{i}' for i in range(len(selected_indicators))])
                 query = f"""
                     SELECT INDICATOR_NAME, DESCRIPTION 
@@ -564,7 +541,6 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 
                 cursor = conn.cursor()
                 cursor.execute(query, params)
-                columns = [desc[0] for desc in cursor.description]
                 rows = cursor.fetchall()
                 cursor.close()
                 
@@ -580,8 +556,6 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                                     <div style='color: #64748b; font-size: 0.85rem; line-height: 1.5;'>{description}</div>
                                 </div>
                             """, unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"**{indicator_name}** — *Description not available*")
                 else:
                     st.info("No descriptions found for selected indicators.")
             except Exception as e:
@@ -615,7 +589,7 @@ with tab_cpi:
     
     st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
     
-    if st.button("🔄 Load CPI Data", type="primary", use_container_width=True):
+    if st.button("🔄 Load CPI Data", type="primary", use_container_width=True, key="load_cpi"):
         with st.spinner("📊 Querying CPI data from database..."):
             try:
                 df = get_data(
@@ -647,7 +621,7 @@ with tab_bop:
     
     st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
     
-    if st.button("🔄 Load BOP Data", type="primary", use_container_width=True):
+    if st.button("🔄 Load BOP Data", type="primary", use_container_width=True, key="load_bop"):
         with st.spinner("📊 Querying BOP data from database..."):
             try:
                 df = get_data(

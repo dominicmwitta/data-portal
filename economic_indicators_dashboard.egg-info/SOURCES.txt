@@ -4,6 +4,8 @@ README.md
 pyproject.toml
 requirements.txt
 setup.py
+dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl
+dist/economic_indicators_dashboard-1.0.0.tar.gz
 economic_dashboard/__init__.py
 economic_dashboard/app.py
 economic_dashboard/database.py

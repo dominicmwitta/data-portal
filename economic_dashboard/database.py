@@ -8,28 +8,42 @@ import pandas as pd
 
 
 @st.cache_resource
-def get_oracle_connection(_username, _password, _dsn):
+def get_oracle_connection(username: str, password: str, host: str, port: int = 1522, service_name: str = "BOT6DB"):
     """
-    Create and cache Oracle database connection
+    Create Oracle database connection using makedsn approach
     
     Args:
-        _username: Oracle database username
-        _password: Oracle database password
-        _dsn: Data Source Name (format: hostname:port/service_name)
+        username: Database username
+        password: Database password
+        host: Database host (e.g., '172.16.1.219')
+        port: Database port (default: 1522)
+        service_name: Database service name (default: 'BOT6DB')
     
     Returns:
-        Oracle connection object or None on failure
+        Connection object or None if connection fails
     """
     try:
+        # Create DSN using makedsn
+        dsn = oracledb.makedsn(host, port, service_name=service_name)
+        
+        # Create connection
         conn = oracledb.connect(
-            user=_username,
-            password=_password,
-            dsn=_dsn
+            user=username,
+            password=password,
+            dsn=dsn
         )
+        
+        print(f"✅ Successfully connected to {host}:{port}/{service_name}")
         return conn
-    except Exception as e:
-        st.error(f"Connection failed: {e}")
+        
+    except oracledb.Error as e:
+        error, = e.args
+        print(f"❌ Oracle connection error: {error.message}")
         return None
+    except Exception as e:
+        print(f"❌ Unexpected error: {str(e)}")
+        return None
+    
 
 
 def execute_query(cursor, query, params=None, wide_format=True):
@@ -96,7 +110,7 @@ def get_data(
         end_month: End month (1-12, optional)
         location: Location name to filter
         indicator_names: List of indicator names to filter (optional)
-        unit_names: List of unit names to filter (optional, e.g., ['USD Million', 'TZS Billion'])
+        unit_names: List of unit names to filter (optional, e.g., ['USD Million', 'TZS Million'])
         aggregation: 'monthly', 'quarterly', 'annual', or 'fiscal_year'
         wide_format: If True, pivot data to wide format
     
@@ -344,7 +358,7 @@ def get_indicators(_connection, section=None):
     
     Args:
         _connection: Active Oracle connection object
-        section: Filter by section ('CPI', 'BOP', etc.)
+        section: Filter by section ('CPI', 'BOP', etc.')
     
     Returns:
         DataFrame with indicator information
