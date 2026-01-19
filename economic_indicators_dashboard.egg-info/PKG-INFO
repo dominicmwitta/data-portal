@@ -1,25 +1,17 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: economic-indicators-dashboard
 Version: 1.0.0
 Summary: A Streamlit dashboard for CPI and Balance of Payments data
-Home-page: https://github.com/dominicmwitta/macrodatabase
-Author: Your Name
-Author-email: your.email@example.com
-Classifier: Development Status :: 4 - Beta
-Classifier: Intended Audience :: Financial and Insurance Industry
-Classifier: Topic :: Office/Business :: Financial
-Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Classifier: Programming Language :: Python :: 3.11
-Classifier: License :: OSI Approved :: MIT License
-Classifier: Operating System :: OS Independent
+Author-email: Your Name <your.email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/dominicmwitta/macrodatabase
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 Requires-Dist: streamlit>=1.28.0
 Requires-Dist: oracledb>=1.4.0
 Requires-Dist: pandas>=2.0.0
+Requires-Dist: plotly>=5.0.0
+Requires-Dist: openpyxl>=3.0.0
 
 # Economic Indicators Dashboard
 

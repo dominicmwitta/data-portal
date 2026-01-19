@@ -1,5 +1,7 @@
+.gitignore
 MANIFEST.in
 README.md
+pyproject.toml
 requirements.txt
 setup.py
 economic_dashboard/__init__.py
@@ -13,3 +15,5 @@ economic_indicators_dashboard.egg-info/dependency_links.txt
 economic_indicators_dashboard.egg-info/entry_points.txt
 economic_indicators_dashboard.egg-info/requires.txt
 economic_indicators_dashboard.egg-info/top_level.txt
+scripts/create_shortcut_linux.py
+scripts/create_shortcut_windows.py
