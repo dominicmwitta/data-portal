@@ -333,14 +333,15 @@ def get_units(_connection):
         return []
 
 
-def get_units_for_indicators(_connection, indicator_names: list, indicator_type: str):
+@st.cache_data(ttl=300)
+def get_units_for_indicators(_connection, indicator_names: tuple, indicator_type: str):
     """
     Get list of units that are actually used by the specified indicators
-    through the fact table join.
+    through the fact table join. Cached for 5 minutes.
 
     Args:
         _connection: Active Oracle connection object
-        indicator_names: List of indicator names to filter by
+        indicator_names: Tuple of indicator names to filter by (tuple for caching)
         indicator_type: 'CPI' or 'BOP' to determine which fact table to use
 
     Returns:

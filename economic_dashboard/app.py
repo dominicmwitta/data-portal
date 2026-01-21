@@ -149,16 +149,25 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ──── Header ────────────────────────────────────────────────────────────────
-st.markdown("""
-    <div style="text-align: center; padding: 2rem 0 1.5rem;">
-        <h1 style="margin:0; font-size: 2.9rem; color: #1e293b; font-weight: 700;">
-            📊 Macroeconomic Database Explorer
-        </h1>
-        <p style="color: #64748b; font-size: 1.2rem; margin-top: 0.5rem; font-weight: 400;">
-            Bank of Tanzania Hub for Macroeconomic and Financial Statistics
-        </p>
-    </div>
-""", unsafe_allow_html=True)
+# Logo and title
+import os
+logo_path = os.path.join(os.path.dirname(__file__), "botlogo.png")
+
+col_logo, col_title, col_space = st.columns([1, 4, 1])
+with col_logo:
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=80)
+with col_title:
+    st.markdown("""
+        <div style="padding: 0.5rem 0;">
+            <h1 style="margin:0; font-size: 2.5rem; color: #1e293b; font-weight: 700;">
+                Macroeconomic Database Explorer
+            </h1>
+            <p style="color: #64748b; font-size: 1.1rem; margin-top: 0.3rem; font-weight: 400;">
+                Bank of Tanzania Hub for Macroeconomic and Financial Statistics
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 #   Session state & login
@@ -228,7 +237,7 @@ except Exception as e:
 # ────────────────────────────────────────────────
 #   Enhanced render_data_display (Plotly + metrics)
 # ────────────────────────────────────────────────
-def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
+def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filters: dict = None, conn = None):
     """Enhanced data display with better visualizations and metrics"""
     if df.empty:
         st.warning(f"⚠️ No data found for {title}. Try adjusting your filters.")
@@ -256,7 +265,20 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
     # Time period
     time_col = next((c for c in ["TIME_PERIOD", "YEAR", "FISCAL_YEAR", "PERIOD"] if c in df.columns), None)
     if time_col:
-        time_range = f"{df[time_col].min()} – {df[time_col].max()}"
+        # Format time range without hours (YYYY-MM-DD or just the value if not datetime)
+        min_val = df[time_col].min()
+        max_val = df[time_col].max()
+        try:
+            if hasattr(min_val, 'strftime'):
+                min_str = min_val.strftime('%Y-%m-%d')
+                max_str = max_val.strftime('%Y-%m-%d')
+            else:
+                min_str = str(min_val)
+                max_str = str(max_val)
+        except:
+            min_str = str(min_val)
+            max_str = str(max_val)
+        time_range = f"{min_str} to {max_str}"
         with cols[1]:
             st.markdown(f"""
                 <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;'>
@@ -338,7 +360,7 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
                 y="Value", 
                 color="Indicator",
                 markers=True, 
-                title=f"{title} — Time Series Analysis",
+                title=f"{title} — Time Series",
                 height=600
             )
 
@@ -406,9 +428,71 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str):
         with col_dl2:
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                # Data sheet
                 df.to_excel(writer, index=False, sheet_name='Data')
+
+                # Metadata sheet (SDMX-style) - if conn available
+                if conn:
+                    try:
+                        fact_table = "FACT_CPI" if indicator_type == "CPI" else "FACT_BOP"
+
+                        # Get indicators from filters or extract from loaded data columns
+                        selected_indicators = []
+                        if filters and filters.get('selected_indicators'):
+                            selected_indicators = filters.get('selected_indicators')
+                        else:
+                            # Extract indicator names from DataFrame columns (excluding standard columns)
+                            standard_cols = ['TIME_PERIOD', 'YEAR', 'MONTH', 'QUARTER', 'LOCATION_NAME',
+                                           'LOCATION', 'UNIT', 'DESCRIPTION', 'INDICATOR_TYPE', 'SECTION']
+                            selected_indicators = [col for col in df.columns if col not in standard_cols]
+
+                        selected_units = filters.get('selected_units') if filters else []
+
+                        # Build metadata query - must have at least indicator filter
+                        if selected_indicators:
+                            params = {}
+                            ind_placeholders = ','.join([f':ind{i}' for i in range(len(selected_indicators))])
+                            params.update({f'ind{i}': name for i, name in enumerate(selected_indicators)})
+
+                            unit_filter = ""
+                            if selected_units:
+                                unit_placeholders = ','.join([f':unit{i}' for i in range(len(selected_units))])
+                                unit_filter = f"AND u.UNIT IN ({unit_placeholders})"
+                                params.update({f'unit{i}': name for i, name in enumerate(selected_units)})
+
+                            metadata_query = f"""
+                                SELECT DISTINCT
+                                    i.INDICATOR_NAME,
+                                    i.DESCRIPTION,
+                                    i.INDICATOR_TYPE,
+                                    i.SECTION,
+                                    u.UNIT,
+                                    l.LOCATION_NAME,
+                                    s.SOURCE
+                                FROM {fact_table} f
+                                JOIN DIM_INDICATOR i ON f.INDICATOR_ID = i.INDICATOR_ID
+                                LEFT JOIN DIM_UNITS u ON f.UNIT_ID = u.UNIT_ID
+                                JOIN DIM_LOCATION l ON f.LOCATION_ID = l.LOCATION_ID
+                                LEFT JOIN DIM_SOURCES s ON f.SOURCE_ID = s.SOURCE_ID
+                                WHERE i.INDICATOR_NAME IN ({ind_placeholders})
+                                {unit_filter}
+                                ORDER BY i.INDICATOR_NAME
+                            """
+
+                            cursor = conn.cursor()
+                            cursor.execute(metadata_query, params)
+                            rows = cursor.fetchall()
+                            columns = [desc[0] for desc in cursor.description]
+                            cursor.close()
+
+                            if rows:
+                                metadata_df = pd.DataFrame(rows, columns=columns)
+                                metadata_df.to_excel(writer, index=False, sheet_name='Metadata')
+                    except Exception as e:
+                        pass  # Skip metadata sheet if query fails
+
             excel_buffer.seek(0)
-            
+
             st.download_button(
                 "📊 Download Excel",
                 excel_buffer.getvalue(),
@@ -485,9 +569,16 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 key=f"{indicator_type}_location_select"
             )
 
+            aggregation_labels = {
+                "monthly": "Monthly",
+                "quarterly": "Quarterly",
+                "annual": "Annual (Calendar Year)",
+                "fiscal_year": "Annual (Fiscal Year)"
+            }
             aggregation = st.selectbox(
                 "Aggregation level",
                 ["monthly", "quarterly", "annual", "fiscal_year"],
+                format_func=lambda x: aggregation_labels.get(x, x),
                 key=f"{indicator_type}_agg_select",
                 help="Choose how to aggregate the time series data"
             )
@@ -513,7 +604,8 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
 
             # Get units relevant to selected indicators (from fact table join)
             if selected_indicators:
-                available_units = get_units_for_indicators(conn, selected_indicators, indicator_type)
+                # Convert to tuple for caching
+                available_units = get_units_for_indicators(conn, tuple(selected_indicators), indicator_type)
             else:
                 # No indicators selected - show all units for this type
                 available_units = units if units else []
@@ -538,7 +630,17 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 # Determine fact table based on indicator type
                 fact_table = "FACT_CPI" if indicator_type == "CPI" else "FACT_BOP"
 
-                placeholders = ','.join([f':ind{i}' for i in range(len(selected_indicators))])
+                # Build query with indicator filter
+                ind_placeholders = ','.join([f':ind{i}' for i in range(len(selected_indicators))])
+                params = {f'ind{i}': name for i, name in enumerate(selected_indicators)}
+
+                # Add unit filter if units are selected
+                unit_filter = ""
+                if selected_units:
+                    unit_placeholders = ','.join([f':unit{i}' for i in range(len(selected_units))])
+                    unit_filter = f"AND u.UNIT IN ({unit_placeholders})"
+                    params.update({f'unit{i}': name for i, name in enumerate(selected_units)})
+
                 query = f"""
                     SELECT DISTINCT
                         i.INDICATOR_NAME,
@@ -553,10 +655,10 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                     LEFT JOIN DIM_UNITS u ON f.UNIT_ID = u.UNIT_ID
                     JOIN DIM_LOCATION l ON f.LOCATION_ID = l.LOCATION_ID
                     LEFT JOIN DIM_SOURCES s ON f.SOURCE_ID = s.SOURCE_ID
-                    WHERE i.INDICATOR_NAME IN ({placeholders})
+                    WHERE i.INDICATOR_NAME IN ({ind_placeholders})
+                    {unit_filter}
                     ORDER BY i.INDICATOR_NAME, l.LOCATION_NAME
                 """
-                params = {f'ind{i}': name for i, name in enumerate(selected_indicators)}
 
                 cursor = conn.cursor()
                 cursor.execute(query, params)
@@ -642,7 +744,7 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
 
 # ──── Tabs ──────────────────────────────────────────────────────────────────
 tab_cpi, tab_bop, tab_raw, tab_ref = st.tabs([
-    "📈 CPI Analysis", "💰 BOP Analysis", "🔧 Raw SQL", "📚 Reference Data"
+    "📈 CPI", "💰 BOP", "🔧 Raw SQL", "📚 Reference Data"
 ])
 
 # ────────────────────────────────────────────────
@@ -672,7 +774,7 @@ with tab_cpi:
                     aggregation=filters['aggregation'],
                     wide_format=True
                 )
-                render_data_display(df, "Consumer Price Index (CPI)", "CPI")
+                render_data_display(df, "Consumer Price Index (CPI)", "CPI", filters, conn)
             except Exception as e:
                 st.error(f"❌ Error loading CPI data: {str(e)}")
                 st.info("Please check your database connection and filter settings.")
@@ -704,7 +806,7 @@ with tab_bop:
                     aggregation=filters['aggregation'],
                     wide_format=True
                 )
-                render_data_display(df, "Balance of Payments (BOP)", "BOP")
+                render_data_display(df, "Balance of Payments (BOP)", "BOP", filters, conn)
             except Exception as e:
                 st.error(f"❌ Error loading BOP data: {str(e)}")
                 st.info("Please check your database connection and filter settings.")
