@@ -41,6 +41,9 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+    /* ══════════════════════════════════════════════════════════════════
+       GLOBAL FOUNDATIONS
+    ══════════════════════════════════════════════════════════════════ */
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
@@ -49,125 +52,489 @@ st.markdown("""
         background: linear-gradient(145deg, #f8fafc, #f1f5f9);
     }
 
+    /* Smooth transitions on all interactive elements */
+    *, *::before, *::after {
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Focus states for accessibility */
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: 2px !important;
+    }
+
+    /* Enhanced dividers */
+    hr {
+        margin: 1.8rem 0;
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════════════════════════════════════════ */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       SIDEBAR STYLING
+    ══════════════════════════════════════════════════════════════════ */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
     }
-    
+
     section[data-testid="stSidebar"] * {
         color: white !important;
     }
-    
+
     section[data-testid="stSidebar"] .stMarkdown {
         color: white !important;
     }
-    
+
     section[data-testid="stSidebar"] h3 {
         color: white !important;
         font-weight: 600 !important;
     }
-    
+
     section[data-testid="stSidebar"] hr {
         border-color: rgba(255, 255, 255, 0.1) !important;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent) !important;
     }
-    
+
     section[data-testid="stSidebar"] button {
         color: white !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(10px);
     }
-    
+
+    section[data-testid="stSidebar"] button:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+
     section[data-testid="stSidebar"] [data-testid="stExpander"] {
         background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       TAB NAVIGATION
+    ══════════════════════════════════════════════════════════════════ */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         background: white;
-        border-radius: 12px;
-        padding: 8px 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 16px;
+        padding: 10px 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
 
     .stTabs [data-baseweb="tab"] {
-        height: 44px;
-        border-radius: 8px;
+        height: 48px;
+        border-radius: 12px;
         color: #475569;
         font-weight: 500;
-        padding: 0 20px;
+        padding: 0 24px;
+        background: transparent;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background: #f1f5f9 !important;
+        color: #1e293b !important;
     }
 
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
         color: white !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35) !important;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       BUTTONS
+    ══════════════════════════════════════════════════════════════════ */
     .stButton > button {
-        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
         color: white;
         font-weight: 600;
-        border-radius: 10px;
-        padding: 0.7rem 1.4rem;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
         border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
     }
 
-    hr { 
-        margin: 1.8rem 0; 
-        border: none;
-        border-top: 2px solid #e2e8f0;
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
-    
+
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+
+    /* Download buttons */
+    .stDownloadButton > button {
+        background: white !important;
+        color: #1e293b !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+    }
+
+    .stDownloadButton > button:hover {
+        border-color: #3b82f6 !important;
+        background: #f8fafc !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       EXPANDERS & FORM ELEMENTS
+    ══════════════════════════════════════════════════════════════════ */
     .stExpander {
         background: white;
-        border-radius: 12px;
+        border-radius: 16px;
         border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
-    
-    .metric-card {
-        background: white;
-        padding: 1.2rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div {
+        border-radius: 10px !important;
+        border: 2px solid #e2e8f0 !important;
     }
-    
+
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    /* Multiselect chips */
+    .stMultiSelect [data-baseweb="tag"] {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+        border-radius: 8px !important;
+        border: 1px solid #bfdbfe !important;
+        color: #1e40af !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       ALERTS & MESSAGES
+    ══════════════════════════════════════════════════════════════════ */
+    .stAlert {
+        border-radius: 12px !important;
+        border: none !important;
+    }
+
+    div[data-testid="stNotification"] {
+        border-radius: 12px !important;
+    }
+
+    /* Success messages */
+    .element-container:has(.stSuccess) .stSuccess {
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+        border-left: 4px solid #10b981 !important;
+    }
+
+    /* Error messages */
+    .element-container:has(.stError) .stError {
+        background: linear-gradient(135deg, #fef2f2, #fee2e2) !important;
+        border-left: 4px solid #ef4444 !important;
+    }
+
+    /* Warning messages */
+    .element-container:has(.stWarning) .stWarning {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+        border-left: 4px solid #f59e0b !important;
+    }
+
+    /* Info messages */
+    .element-container:has(.stInfo) .stInfo {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+        border-left: 4px solid #3b82f6 !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       DATA TABLE
+    ══════════════════════════════════════════════════════════════════ */
+    .stDataFrame {
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       METRICS
+    ══════════════════════════════════════════════════════════════════ */
     div[data-testid="stMetricValue"] {
         font-size: 1.8rem;
         font-weight: 700;
         color: #1e293b;
     }
-    
+
     div[data-testid="stMetricLabel"] {
         font-size: 0.85rem;
         color: #64748b;
         font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       SPINNER
+    ══════════════════════════════════════════════════════════════════ */
+    .stSpinner > div {
+        border-color: #3b82f6 transparent transparent transparent !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       LOGIN FORM STYLING
+    ══════════════════════════════════════════════════════════════════ */
+    .login-container {
+        max-width: 520px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+        padding: 2.5rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .login-hero {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-hero-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .login-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       FILTER SECTION HEADERS
+    ══════════════════════════════════════════════════════════════════ */
+    .filter-section-time {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-left: 4px solid #0ea5e9;
+        padding: 0.75rem 1rem;
+        border-radius: 0 12px 12px 0;
+        margin-bottom: 1rem;
+    }
+
+    .filter-section-location {
+        background: linear-gradient(135deg, #fefce8, #fef9c3);
+        border-left: 4px solid #eab308;
+        padding: 0.75rem 1rem;
+        border-radius: 0 12px 12px 0;
+        margin-bottom: 1rem;
+    }
+
+    .filter-section-indicators {
+        background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+        border-left: 4px solid #8b5cf6;
+        padding: 0.75rem 1rem;
+        border-radius: 0 12px 12px 0;
+        margin-bottom: 1rem;
+    }
+
+    .filter-section-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       HEADER GLASSMORPHISM
+    ══════════════════════════════════════════════════════════════════ */
+    .header-glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        margin-bottom: 1.5rem;
+    }
+
+    .header-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: -0.02em;
+        margin: 0;
+    }
+
+    .header-subtitle {
+        color: #64748b;
+        font-size: 1rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .connection-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: #22c55e;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       METRIC CARDS
+    ══════════════════════════════════════════════════════════════════ */
+    .metric-card-blue {
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border: 1px solid #bfdbfe;
+    }
+
+    .metric-card-green {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border: 1px solid #bbf7d0;
+    }
+
+    .metric-card-yellow {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        border: 1px solid #fde68a;
+    }
+
+    .metric-card-purple {
+        background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+        border: 1px solid #e9d5ff;
+    }
+
+    .metric-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+
+    .metric-icon-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font-size: 1.5rem;
+        opacity: 0.6;
+    }
+
+    .metric-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .metric-value-small {
+        font-size: 1.25rem;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ──── Header ────────────────────────────────────────────────────────────────
-# Logo and title
 import os
 logo_path = os.path.join(os.path.dirname(__file__), "botlogo.png")
 
-col_logo, col_title, col_space = st.columns([1, 4, 1])
-with col_logo:
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=80)
-with col_title:
-    st.markdown("""
-        <div style="padding: 0.5rem 0;">
-            <h1 style="margin:0; font-size: 2.5rem; color: #1e293b; font-weight: 700;">
-                Macroeconomic Database Explorer
+# Show connection indicator when connected
+connection_indicator = '<span class="connection-dot"></span>' if st.session_state.get('connected', False) else ''
+
+st.markdown(f"""
+    <div class="header-glass">
+        <div style="text-align: center;">
+            <h1 class="header-title" style="margin: 0;">
+                {connection_indicator}Macroeconomic Database Explorer
             </h1>
-            <p style="color: #64748b; font-size: 1.1rem; margin-top: 0.3rem; font-weight: 400;">
+            <p class="header-subtitle" style="margin: 0.25rem 0 0 0;">
                 Bank of Tanzania Hub for Macroeconomic and Financial Statistics
             </p>
         </div>
-    """, unsafe_allow_html=True)
+    </div>
+""", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 #   Session state & login
@@ -177,50 +544,65 @@ if 'connected' not in st.session_state:
     st.session_state.conn = None
 
 if not st.session_state.connected:
-    st.info("🔐 Please enter your Oracle database credentials to connect.")
-    
-    with st.form("login"):
-        st.markdown("### Database Connection")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            username = st.text_input("Username", value="", placeholder="Enter username")
-            host = st.text_input("Host", value="172.16.1.219", 
-                               help="Database server hostname or IP",
-                               placeholder="172.16.1.219")
-            port = st.number_input("Port", value=1522, min_value=1, max_value=65535,
-                                 help="Database port number")
-        with col2:
-            password = st.text_input("Password", type="password", placeholder="Enter password")
+    # Create centered columns for the form
+    col_space1, col_form, col_space2 = st.columns([1, 2, 1])
+
+    with col_form:
+        with st.form("login"):
+            st.markdown("""
+                <div class="filter-section-indicators" style="margin-bottom: 1.5rem;">
+                    <p class="filter-section-title" style="color: #6d28d9;">🔐 Credentials</p>
+                </div>
+            """, unsafe_allow_html=True)
+
+            username = st.text_input("Username", value="", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+
+            st.markdown("""
+                <div class="filter-section-time" style="margin: 1.5rem 0 1rem 0;">
+                    <p class="filter-section-title" style="color: #0369a1;">🖥️ Server Configuration</p>
+                </div>
+            """, unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                host = st.text_input("Host", value="172.16.1.219",
+                                   help="Database server hostname or IP",
+                                   placeholder="172.16.1.219")
+            with col2:
+                port = st.number_input("Port", value=1522, min_value=1, max_value=65535,
+                                     help="Database port number")
+
             service_name = st.text_input("Service Name", value="BOT6DB",
                                        help="Database service name",
                                        placeholder="BOT6DB")
-            st.write("")  # Spacing
-        
-        submitted = st.form_submit_button("🔌 Connect to Database", type="primary", use_container_width=True)
-        
-        if submitted:
-            if username and password and host and service_name:
-                with st.spinner("Connecting to database..."):
-                    try:
-                        conn = get_oracle_connection(username, password, host, int(port), service_name)
-                        if conn:
-                            st.session_state.connected = True
-                            st.session_state.conn = conn
-                            st.session_state.connection_info = {
-                                'username': username,
-                                'host': host,
-                                'port': port,
-                                'service_name': service_name
-                            }
-                            st.success("✅ Connected successfully!")
-                            st.rerun()
-                        else:
-                            st.error("❌ Connection failed. Please check your credentials.")
-                    except Exception as e:
-                        st.error(f"❌ Connection error: {str(e)}")
-            else:
-                st.error("⚠️ All fields are required.")
+
+            st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+
+            submitted = st.form_submit_button("🔌 Connect to Database", type="primary", use_container_width=True)
+
+            if submitted:
+                if username and password and host and service_name:
+                    with st.spinner("🔄 Establishing connection..."):
+                        try:
+                            conn = get_oracle_connection(username, password, host, int(port), service_name)
+                            if conn:
+                                st.session_state.connected = True
+                                st.session_state.conn = conn
+                                st.session_state.connection_info = {
+                                    'username': username,
+                                    'host': host,
+                                    'port': port,
+                                    'service_name': service_name
+                                }
+                                st.success("Connected successfully! Redirecting...")
+                                st.rerun()
+                            else:
+                                st.error("Connection failed. Please verify your credentials.")
+                        except Exception as e:
+                            st.error(f"Connection error: {str(e)}")
+                else:
+                    st.warning("Please fill in all required fields.")
     st.stop()
 
 conn = st.session_state.conn
@@ -240,32 +622,28 @@ except Exception as e:
 def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filters: dict = None, conn = None):
     """Enhanced data display with better visualizations and metrics"""
     if df.empty:
-        st.warning(f"⚠️ No data found for {title}. Try adjusting your filters.")
+        st.warning(f"No data found for {title}. Try adjusting your filters.")
         return
 
     st.markdown(f"### {title} Results")
     st.markdown("---")
 
-    # Enhanced metrics cards with better styling
+    # Enhanced metrics cards with colored gradients and icons
     cols = st.columns(4)
-    
-    # Total rows
+
+    # Total rows - Blue gradient
     with cols[0]:
         st.markdown(f"""
-            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;'>
-                <div style='font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 0.5rem;'>
-                    📊 TOTAL RECORDS
-                </div>
-                <div style='font-size: 2rem; font-weight: 700; color: #1e293b;'>
-                    {len(df):,}
-                </div>
+            <div class='metric-card metric-card-blue'>
+                <span class='metric-icon-badge'>📊</span>
+                <div class='metric-label' style='color: #1d4ed8;'>Total Records</div>
+                <div class='metric-value'>{len(df):,}</div>
             </div>
         """, unsafe_allow_html=True)
-    
-    # Time period
+
+    # Time period - Green gradient
     time_col = next((c for c in ["TIME_PERIOD", "YEAR", "FISCAL_YEAR", "PERIOD"] if c in df.columns), None)
     if time_col:
-        # Format time range without hours (YYYY-MM-DD or just the value if not datetime)
         min_val = df[time_col].min()
         max_val = df[time_col].max()
         try:
@@ -278,44 +656,35 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
         except:
             min_str = str(min_val)
             max_str = str(max_val)
-        time_range = f"{min_str} to {max_str}"
+        time_range = f"{min_str} — {max_str}"
         with cols[1]:
             st.markdown(f"""
-                <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;'>
-                    <div style='font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 0.5rem;'>
-                        📅 TIME RANGE
-                    </div>
-                    <div style='font-size: 1.4rem; font-weight: 700; color: #1e293b;'>
-                        {time_range}
-                    </div>
+                <div class='metric-card metric-card-green'>
+                    <span class='metric-icon-badge'>📅</span>
+                    <div class='metric-label' style='color: #15803d;'>Time Range</div>
+                    <div class='metric-value metric-value-small'>{time_range}</div>
                 </div>
             """, unsafe_allow_html=True)
-    
-    # Number of series
+
+    # Number of series - Yellow gradient
     numeric = df.select_dtypes("number").columns.tolist()
     with cols[2]:
         st.markdown(f"""
-            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;'>
-                <div style='font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 0.5rem;'>
-                    📈 DATA SERIES
-                </div>
-                <div style='font-size: 2rem; font-weight: 700; color: #1e293b;'>
-                    {len(numeric)}
-                </div>
+            <div class='metric-card metric-card-yellow'>
+                <span class='metric-icon-badge'>📈</span>
+                <div class='metric-label' style='color: #a16207;'>Data Series</div>
+                <div class='metric-value'>{len(numeric)}</div>
             </div>
         """, unsafe_allow_html=True)
-    
-    # Location
+
+    # Location - Purple gradient
     location_val = df.get("LOCATION_NAME", df.get("LOCATION", pd.Series(["—"]))).iloc[0]
     with cols[3]:
         st.markdown(f"""
-            <div style='background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;'>
-                <div style='font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 0.5rem;'>
-                    🌍 LOCATION
-                </div>
-                <div style='font-size: 1.6rem; font-weight: 700; color: #1e293b;'>
-                    {location_val}
-                </div>
+            <div class='metric-card metric-card-purple'>
+                <span class='metric-icon-badge'>🌍</span>
+                <div class='metric-label' style='color: #7c3aed;'>Location</div>
+                <div class='metric-value' style='font-size: 1.4rem;'>{location_val}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -338,14 +707,14 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
 
     st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
 
-    # Enhanced Plotly chart
+    # Enhanced Plotly chart with improved colors and layout
     if time_col and len(numeric) > 0:
         id_vars = [time_col]
-        if "LOCATION_NAME" in df.columns: 
+        if "LOCATION_NAME" in df.columns:
             id_vars.append("LOCATION_NAME")
         elif "LOCATION" in df.columns:
             id_vars.append("LOCATION")
-            
+
         value_vars = [c for c in df.columns if c not in id_vars + ["UNIT_NAME", "INDICATOR_CODE", "LOCATION_CODE", "DESCRIPTION"]]
 
         if value_vars:
@@ -354,15 +723,29 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
             df_long = df_long.dropna(subset=["Value"])
             df_long = df_long.sort_values(time_col)
 
-            fig = px.line(
-                df_long, 
-                x=time_col, 
-                y="Value", 
-                color="Indicator",
-                markers=True, 
-                title=f"{title} — Time Series",
-                height=600
-            )
+            # Get chart type from session state (default to Line)
+            chart_type = st.session_state.get('chart_type', 'Line')
+
+            if chart_type == "Bar":
+                fig = px.bar(
+                    df_long,
+                    x=time_col,
+                    y="Value",
+                    color="Indicator",
+                    barmode="group",
+                    title=f"{title} — Time Series",
+                    height=600
+                )
+            else:
+                fig = px.line(
+                    df_long,
+                    x=time_col,
+                    y="Value",
+                    color="Indicator",
+                    markers=False,
+                    title=f"{title} — Time Series",
+                    height=600
+                )
 
             fig.update_layout(
                 hovermode="x unified",
@@ -387,9 +770,20 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
                 title_font_color="#1e293b",
                 title_x=0.02
             )
-            
+
             fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.05)', tickangle=-45)
             fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.05)')
+
+            # Check if x-axis contains year data (integers between 1900-2100)
+            try:
+                x_values = df_long[time_col].dropna()
+                if x_values.dtype in ['int64', 'float64']:
+                    min_val, max_val = x_values.min(), x_values.max()
+                    if 1900 <= min_val <= 2100 and 1900 <= max_val <= 2100:
+                        # It's year data - display as integers without comma separator
+                        fig.update_xaxes(dtick=1, tickformat=".0f")
+            except:
+                pass
 
             if df_long["Value"].max() > 1e6:
                 fig.update_yaxes(tickformat=",")
@@ -506,16 +900,34 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
 # ────────────────────────────────────────────────
 def render_filters(indicator_type: str, locations: list, units: list, conn):
     """Reusable filter component for both CPI and BOP tabs"""
-    
-    with st.expander("🔍 Filters & Options", expanded=True):
+
+    # Query Builder header
+    st.markdown("""
+        <div style='display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;'>
+            <div style='background: linear-gradient(135deg, #3b82f6, #1d4ed8); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;'>
+                <span style='font-size: 1.1rem;'>🔍</span>
+            </div>
+            <div>
+                <h4 style='margin: 0; color: #1e293b; font-size: 1.1rem; font-weight: 600;'>Query Builder</h4>
+                <p style='margin: 0; color: #64748b; font-size: 0.8rem;'>Configure your data filters below</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander("📋 Filters & Options", expanded=True):
         col_time_loc, col_ind_units = st.columns([1.4, 1])
 
         with col_time_loc:
-            st.markdown("**⏰ Time & Location**")
-            
+            # Time Period Section - Blue gradient
+            st.markdown("""
+                <div class="filter-section-time">
+                    <p class="filter-section-title" style="color: #0369a1;">⏰ Time Period</p>
+                </div>
+            """, unsafe_allow_html=True)
+
             use_range = st.checkbox(
-                "Use date range instead of years", 
-                value=False, 
+                "Use date range instead of years",
+                value=False,
                 key=f"{indicator_type}_use_range",
                 help="Select specific months within a date range"
             )
@@ -524,7 +936,7 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 c1, c2 = st.columns(2)
                 with c1:
                     start_dt = st.date_input(
-                        "Start date", 
+                        "Start date",
                         value=pd.to_datetime("2020-01-01"),
                         min_value=pd.to_datetime("1960-01-01"),
                         max_value=pd.to_datetime("2050-12-31"),
@@ -532,7 +944,7 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                     )
                 with c2:
                     end_dt = st.date_input(
-                        "End date", 
+                        "End date",
                         value=pd.to_datetime("2023-12-31"),
                         min_value=pd.to_datetime("1960-01-01"),
                         max_value=pd.to_datetime("2050-12-31"),
@@ -546,24 +958,31 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 c1, c2 = st.columns(2)
                 with c1:
                     start_year = st.number_input(
-                        "From year", 
-                        min_value=1960, 
-                        max_value=2050, 
-                        value=2020, 
+                        "From year",
+                        min_value=1960,
+                        max_value=2050,
+                        value=2020,
                         key=f"{indicator_type}_from_year"
                     )
                 with c2:
                     end_year = st.number_input(
-                        "To year", 
-                        min_value=1960, 
-                        max_value=2050, 
-                        value=2023, 
+                        "To year",
+                        min_value=1960,
+                        max_value=2050,
+                        value=2023,
                         key=f"{indicator_type}_to_year"
                     )
                 start_month = end_month = None
 
+            # Location & Aggregation Section - Yellow gradient
+            st.markdown("""
+                <div class="filter-section-location" style="margin-top: 1.25rem;">
+                    <p class="filter-section-title" style="color: #a16207;">📍 Location & Aggregation</p>
+                </div>
+            """, unsafe_allow_html=True)
+
             location = st.selectbox(
-                "Location", 
+                "Location",
                 locations,
                 index=locations.index("Tanzania") if "Tanzania" in locations else 0,
                 key=f"{indicator_type}_location_select"
@@ -584,14 +1003,19 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
             )
 
         with col_ind_units:
-            st.markdown("**📊 Indicators & Units**")
-            
+            # Indicators & Units Section - Purple gradient
+            st.markdown("""
+                <div class="filter-section-indicators">
+                    <p class="filter-section-title" style="color: #6d28d9;">📊 Indicators & Units</p>
+                </div>
+            """, unsafe_allow_html=True)
+
             try:
                 ind_df = get_indicators(conn, indicator_type)
                 ind_options = sorted(ind_df['INDICATOR_NAME'].tolist()) if not ind_df.empty else []
             except Exception as e:
                 ind_options = []
-                st.caption(f"⚠️ Could not load indicators: {str(e)[:50]}")
+                st.caption(f"Could not load indicators: {str(e)[:50]}")
 
             selected_indicators = st.multiselect(
                 "Indicators",
@@ -776,7 +1200,7 @@ with tab_cpi:
                 )
                 render_data_display(df, "Consumer Price Index (CPI)", "CPI", filters, conn)
             except Exception as e:
-                st.error(f"❌ Error loading CPI data: {str(e)}")
+                st.error(f"Error loading CPI data: {str(e)}")
                 st.info("Please check your database connection and filter settings.")
 
 # ────────────────────────────────────────────────
@@ -808,7 +1232,7 @@ with tab_bop:
                 )
                 render_data_display(df, "Balance of Payments (BOP)", "BOP", filters, conn)
             except Exception as e:
-                st.error(f"❌ Error loading BOP data: {str(e)}")
+                st.error(f"Error loading BOP data: {str(e)}")
                 st.info("Please check your database connection and filter settings.")
 
 # ────────────────────────────────────────────────
@@ -819,7 +1243,7 @@ with tab_raw:
     st.markdown("Execute custom SQL queries directly on the database")
     st.markdown("---")
     
-    st.warning("⚠️ **Advanced users only**. Be careful with write operations.")
+    st.warning("**Advanced users only**. Be careful with write operations.")
     
     sql_query = st.text_area(
         "SQL Query",
@@ -840,7 +1264,7 @@ with tab_raw:
             with st.spinner("Executing query..."):
                 df_result = pd.read_sql(sql_query, conn)
                 
-                st.success(f"✅ Query executed successfully! Returned {len(df_result)} rows.")
+                st.success(f"Query executed successfully! Returned {len(df_result)} rows.")
                 
                 if not df_result.empty:
                     st.dataframe(df_result, use_container_width=True, hide_index=False)
@@ -855,7 +1279,7 @@ with tab_raw:
                 else:
                     st.info("Query executed but returned no results.")
         except Exception as e:
-            st.error(f"❌ Query error: {str(e)}")
+            st.error(f"Query error: {str(e)}")
     elif execute_btn:
         st.warning("Please enter a SQL query first.")
 
@@ -921,11 +1345,11 @@ with st.sidebar:
     st.markdown("""
         <div style="text-align: center; padding: 1rem 0;">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8 2 4 3.5 4 5.5V18.5C4 20.5 8 22 12 22C16 22 20 20.5 20 18.5V5.5C20 3.5 16 2 12 2Z" 
+                <path d="M12 2C8 2 4 3.5 4 5.5V18.5C4 20.5 8 22 12 22C16 22 20 20.5 20 18.5V5.5C20 3.5 16 2 12 2Z"
                       fill="url(#grad1)" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4 12C4 14 8 15.5 12 15.5C16 15.5 20 14 20 12" 
+                <path d="M4 12C4 14 8 15.5 12 15.5C16 15.5 20 14 20 12"
                       stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4 8.5C4 10.5 8 12 12 12C16 12 20 10.5 20 8.5" 
+                <path d="M4 8.5C4 10.5 8 12 12 12C16 12 20 10.5 20 8.5"
                       stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <ellipse cx="12" cy="5.5" rx="8" ry="3.5" fill="#3b82f6" opacity="0.3"/>
                 <defs>
@@ -937,39 +1361,80 @@ with st.sidebar:
             </svg>
         </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("### 🎛️ Database Controls")
-    st.markdown('<hr style="border-color: rgba(255,255,255,0.2); margin: 1rem 0;">', unsafe_allow_html=True)
 
-    # Connection status
+    st.markdown("### 🎛️ Database Controls")
+
+    # Connection status indicator
+    st.markdown("""
+        <div style='display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; background: rgba(34, 197, 94, 0.15); border-radius: 10px; border: 1px solid rgba(34, 197, 94, 0.3); margin: 1rem 0;'>
+            <span style='display: inline-block; width: 10px; height: 10px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);'></span>
+            <span style='color: #86efac; font-weight: 500; font-size: 0.9rem;'>Connected</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<hr style="border-color: rgba(255,255,255,0.15); margin: 1rem 0;">', unsafe_allow_html=True)
+
+    # Connection test button
     if st.button("🔄 Test Connection", use_container_width=True, key="test_conn_btn"):
         ok, msg, ts = test_connection(conn)
         if ok:
-            st.success(f"✅ Active\n\n🕐 {ts}")
+            st.success(f"Active - Server time: {ts}")
         else:
-            st.error(f"❌ {msg}")
+            st.error(f"{msg}")
 
-    st.markdown('<hr style="border-color: rgba(255,255,255,0.2); margin: 1rem 0;">', unsafe_allow_html=True)
-    
+    st.markdown('<hr style="border-color: rgba(255,255,255,0.15); margin: 1rem 0;">', unsafe_allow_html=True)
+
     # Database info
     with st.expander("ℹ️ Connection Info", expanded=False):
         try:
             st.markdown(f"""
-                <div style='background: rgba(59, 130, 246, 0.15); padding: 1rem; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.4);'>
-                    <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.9rem;'><strong>User:</strong> {conn.username if hasattr(conn, 'username') else 'N/A'}</p>
-                    <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.9rem;'><strong>DSN:</strong> {conn.dsn if hasattr(conn, 'dsn') else 'N/A'}</p>
+                <div style='background: rgba(59, 130, 246, 0.15); padding: 1rem; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.3);'>
+                    <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>User:</strong> {conn.username if hasattr(conn, 'username') else 'N/A'}</p>
+                    <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>DSN:</strong> {conn.dsn if hasattr(conn, 'dsn') else 'N/A'}</p>
                 </div>
             """, unsafe_allow_html=True)
         except:
             st.markdown("""
-                <div style='background: rgba(239, 68, 68, 0.15); padding: 1rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.4);'>
-                    <p style='margin: 0; color: #fca5a5; font-size: 0.9rem;'>Connection details unavailable</p>
+                <div style='background: rgba(239, 68, 68, 0.15); padding: 1rem; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.3);'>
+                    <p style='margin: 0; color: #fca5a5; font-size: 0.85rem;'>Connection details unavailable</p>
                 </div>
             """, unsafe_allow_html=True)
-    
-    st.markdown('<hr style="border-color: rgba(255,255,255,0.2); margin: 1rem 0;">', unsafe_allow_html=True)
-    
-    # Disconnect button
+
+    # Display Options section
+    with st.expander("🎨 Display Options", expanded=True):
+        chart_type = st.radio(
+            "Chart Type",
+            options=["Line", "Bar"],
+            index=0,
+            key="chart_type_selector",
+            horizontal=True
+        )
+        st.session_state.chart_type = chart_type
+
+        st.markdown("""
+            <div style='background: rgba(139, 92, 246, 0.15); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.3); margin-top: 0.75rem;'>
+                <p style='margin: 0.3rem 0; color: #e2e8f0; font-size: 0.8rem;'><strong>Number Format:</strong> Thousands separator</p>
+                <p style='margin: 0.3rem 0; color: #e2e8f0; font-size: 0.8rem;'><strong>Date Format:</strong> YYYY-MM-DD</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown('<hr style="border-color: rgba(255,255,255,0.15); margin: 1rem 0;">', unsafe_allow_html=True)
+
+    # Disconnect button with red tint
+    st.markdown("""
+        <style>
+        div[data-testid="stSidebar"] button[kind="secondary"] {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border: 1px solid rgba(239, 68, 68, 0.4) !important;
+            color: #fca5a5 !important;
+        }
+        div[data-testid="stSidebar"] button[kind="secondary"]:hover {
+            background: rgba(239, 68, 68, 0.25) !important;
+            border-color: rgba(239, 68, 68, 0.6) !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     if st.button("🔌 Disconnect", type="secondary", use_container_width=True, key="disconnect_btn"):
         try:
             conn.close()
@@ -980,23 +1445,27 @@ with st.sidebar:
             st.session_state.connected = False
             st.session_state.conn = None
             st.rerun()
-    
-    st.markdown('<hr style="border-color: rgba(255,255,255,0.2); margin: 1.5rem 0;">', unsafe_allow_html=True)
-    
+
+    st.markdown('<hr style="border-color: rgba(255,255,255,0.15); margin: 1.5rem 0;">', unsafe_allow_html=True)
+
     # Quick Stats
     with st.expander("📊 Quick Stats", expanded=False):
         st.markdown("""
-            <div style='background: rgba(16, 185, 129, 0.15); padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.4);'>
-                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.9rem;'><strong>Tables:</strong> CPI, BOP, + More Coming</p>
-                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.9rem;'><strong>Coverage:</strong> Tanzania Macroeconomic Data</p>
-                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.9rem;'><strong>Status:</strong> Active & Expanding</p>
+            <div style='background: rgba(16, 185, 129, 0.15); padding: 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);'>
+                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Tables:</strong> CPI, BOP, + More Coming</p>
+                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Coverage:</strong> Tanzania Macroeconomic Data</p>
+                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Status:</strong> Active & Expanding</p>
             </div>
         """, unsafe_allow_html=True)
-    
-    st.markdown('<hr style="border-color: rgba(255,255,255,0.2); margin: 1.5rem 0;">', unsafe_allow_html=True)
+
+    st.markdown('<hr style="border-color: rgba(255,255,255,0.15); margin: 1.5rem 0;">', unsafe_allow_html=True)
+
+    # Footer
     st.markdown("""
-        <div style='text-align: center; padding: 1rem 0; color: #94a3b8;'>
-            <small style='color: #cbd5e1;'>Macroeconomic Database v2.0</small><br>
-            <small style='color: #94a3b8;'>© 2026 Tanzania Economic Data</small>
+        <div style='text-align: center; padding: 1rem 0;'>
+            <div style='background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; margin-bottom: 0.75rem;'>
+                <small style='color: #cbd5e1; font-weight: 500;'>Macroeconomic Database v2.0</small>
+            </div>
+            <small style='color: #64748b;'>© 2026 Tanzania Economic Data</small>
         </div>
     """, unsafe_allow_html=True)

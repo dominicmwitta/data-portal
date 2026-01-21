@@ -24,7 +24,7 @@ def main():
     app_path = Path(__file__).parent / "app.py"
 
     if not app_path.exists():
-        print(f"❌ Error: Could not find app.py at {app_path}")
+        print(f"[ERROR] Could not find app.py at {app_path}")
         sys.exit(1)
 
     port = 8501
@@ -43,9 +43,9 @@ def main():
         "--global.developmentMode=false"
     ]
 
-    print("🚀 Launching Chota Data Dashboard...")
-    print(f"📂 App location: {app_path}")
-    print(f"🌐 Opening browser at: {url}")
+    print("Launching Chota Data Dashboard...")
+    print(f"App location: {app_path}")
+    print(f"Opening browser at: {url}")
     print("\n" + "="*60)
     print("Press Ctrl+C to stop the dashboard")
     print("="*60 + "\n")
@@ -58,9 +58,9 @@ def main():
     try:
         subprocess.run(streamlit_args)
     except KeyboardInterrupt:
-        print("\n\n👋 Dashboard stopped. Goodbye!")
+        print("\n\nDashboard stopped. Goodbye!")
     except Exception as e:
-        print(f"\n❌ Error launching dashboard: {e}")
+        print(f"\n[ERROR] Error launching dashboard: {e}")
         sys.exit(1)
 
 

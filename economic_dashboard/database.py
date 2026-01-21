@@ -33,16 +33,16 @@ def get_oracle_connection(username: str, password: str, host: str, port: int = 1
             dsn=dsn
         )
         
-        print(f"✅ Successfully connected to {host}:{port}/{service_name}")
+        print(f"[OK] Successfully connected to {host}:{port}/{service_name}")
         return conn
-        
+
     except oracledb.Error as e:
         error, = e.args
-        print(f"❌ Oracle connection error: {error.message}")
-        return None
+        print(f"[ERROR] Oracle connection error: {error.message}")
+        raise
     except Exception as e:
-        print(f"❌ Unexpected error: {str(e)}")
-        return None
+        print(f"[ERROR] Unexpected error: {str(e)}")
+        raise
     
 
 
