@@ -11,12 +11,16 @@ from .database import (
     get_oracle_connection,
     get_data,
     get_locations,
-    get_indicators
+    get_indicators,
+    get_units,
+    test_connection
 )
 
 __all__ = [
     'get_oracle_connection',
     'get_data',
     'get_locations',
-    'get_indicators'
+    'get_indicators',
+    'get_units',
+    'test_connection'
 ]

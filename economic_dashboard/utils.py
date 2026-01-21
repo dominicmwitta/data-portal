@@ -11,7 +11,10 @@ def get_indicator_options(connection, data_group):
     """
     Get indicator options for CPI or BOP with multiple fallback strategies
     """
-    from database import get_indicators
+    try:
+        from .database import get_indicators
+    except ImportError:
+        from database import get_indicators
     
     indicator_options = []
     

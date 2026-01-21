@@ -10,14 +10,25 @@ import plotly.graph_objects as go
 from datetime import datetime
 from io import BytesIO
 
-from database import (
-    get_oracle_connection,
-    get_data,
-    get_locations,
-    get_units,
-    test_connection,
-    get_indicators
-)
+try:
+    from .database import (
+        get_oracle_connection,
+        get_data,
+        get_locations,
+        get_units,
+        test_connection,
+        get_indicators
+    )
+except ImportError:
+    # Running directly (e.g., streamlit run app.py)
+    from database import (
+        get_oracle_connection,
+        get_data,
+        get_locations,
+        get_units,
+        test_connection,
+        get_indicators
+    )
 
 # ────────────────────────────────────────────────
 #   Page config & global styling
@@ -528,27 +539,32 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 )
     
     if selected_indicators:
-        with st.expander("📋 Selected Indicator Descriptions", expanded=False):
+        with st.expander("📋 Selected Indicator Descriptions & Metadata", expanded=False):
             try:
                 placeholders = ','.join([f':ind{i}' for i in range(len(selected_indicators))])
                 query = f"""
-                    SELECT INDICATOR_NAME, DESCRIPTION 
-                    FROM DIM_INDICATOR 
+                    SELECT INDICATOR_NAME, DESCRIPTION, INDICATOR_TYPE, SECTION
+                    FROM DIM_INDICATOR
                     WHERE INDICATOR_NAME IN ({placeholders})
                     ORDER BY INDICATOR_NAME
                 """
                 params = {f'ind{i}': name for i, name in enumerate(selected_indicators)}
-                
+
                 cursor = conn.cursor()
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
+                columns = [desc[0] for desc in cursor.description]
                 cursor.close()
-                
+
                 if rows:
-                    for row in rows:
-                        indicator_name = row[0]
-                        description = row[1] if len(row) > 1 else None
-                        
+                    # Create DataFrame for download
+                    metadata_df = pd.DataFrame(rows, columns=columns)
+
+                    # Display descriptions
+                    for _, row in metadata_df.iterrows():
+                        indicator_name = row['INDICATOR_NAME']
+                        description = row.get('DESCRIPTION', None)
+
                         if description and str(description).strip():
                             st.markdown(f"""
                                 <div style='background: #f8fafc; padding: 0.8rem; border-radius: 6px; margin-bottom: 0.8rem; border-left: 3px solid #3b82f6;'>
@@ -556,6 +572,37 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                                     <div style='color: #64748b; font-size: 0.85rem; line-height: 1.5;'>{description}</div>
                                 </div>
                             """, unsafe_allow_html=True)
+
+                    # Download buttons for metadata
+                    st.markdown("---")
+                    st.markdown("**📥 Download Indicator Metadata**")
+                    col_csv, col_excel = st.columns(2)
+
+                    with col_csv:
+                        csv_data = metadata_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            "📄 Download CSV",
+                            csv_data,
+                            f"{indicator_type.lower()}_indicator_metadata.csv",
+                            "text/csv",
+                            use_container_width=True,
+                            key=f"{indicator_type}_metadata_csv"
+                        )
+
+                    with col_excel:
+                        excel_buffer = BytesIO()
+                        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                            metadata_df.to_excel(writer, index=False, sheet_name='Indicator Metadata')
+                        excel_buffer.seek(0)
+
+                        st.download_button(
+                            "📊 Download Excel",
+                            excel_buffer.getvalue(),
+                            f"{indicator_type.lower()}_indicator_metadata.xlsx",
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True,
+                            key=f"{indicator_type}_metadata_xlsx"
+                        )
                 else:
                     st.info("No descriptions found for selected indicators.")
             except Exception as e:

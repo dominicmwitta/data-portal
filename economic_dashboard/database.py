@@ -378,25 +378,27 @@ def get_indicators(_connection, section=None):
         """
         if section:
             # Try SECTION first, fallback to INDICATOR_TYPE
-            query = f"""
+            query = """
                 SELECT INDICATOR_NAME, DESCRIPTION, SECTION
                 FROM DIM_INDICATOR
-                WHERE (UPPER(SECTION) = UPPER('{section}') 
-                       OR (SECTION IS NULL AND UPPER(INDICATOR_TYPE) = UPPER('{section}')))
+                WHERE (UPPER(SECTION) = UPPER(:section)
+                       OR (SECTION IS NULL AND UPPER(INDICATOR_TYPE) = UPPER(:section)))
                 ORDER BY INDICATOR_NAME
             """
+            df = pd.read_sql(query, _connection, params={'section': section})
         else:
             query += " ORDER BY INDICATOR_NAME"
-        df = pd.read_sql(query, _connection)
+            df = pd.read_sql(query, _connection)
         return df
     except Exception as e:
         # Fallback to simpler query
         try:
             query = "SELECT INDICATOR_NAME, DESCRIPTION FROM DIM_INDICATOR"
             if section:
-                query += f" WHERE UPPER(SECTION) = UPPER('{section}')"
-            query += " ORDER BY INDICATOR_NAME"
-            df = pd.read_sql(query, _connection)
+                query += " WHERE UPPER(SECTION) = UPPER(:section)"
+                df = pd.read_sql(query + " ORDER BY INDICATOR_NAME", _connection, params={'section': section})
+            else:
+                df = pd.read_sql(query + " ORDER BY INDICATOR_NAME", _connection)
             return df
         except:
             return pd.DataFrame()
