@@ -552,11 +552,13 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                         i.INDICATOR_TYPE,
                         i.SECTION,
                         u.UNIT,
-                        l.LOCATION_NAME
+                        l.LOCATION_NAME,
+                        s.SOURCE
                     FROM {fact_table} f
                     JOIN DIM_INDICATOR i ON f.INDICATOR_ID = i.INDICATOR_ID
                     LEFT JOIN DIM_UNITS u ON f.UNIT_ID = u.UNIT_ID
                     JOIN DIM_LOCATION l ON f.LOCATION_ID = l.LOCATION_ID
+                    LEFT JOIN DIM_SOURCES s ON f.SOURCE_ID = s.SOURCE_ID
                     WHERE i.INDICATOR_NAME IN ({placeholders})
                     ORDER BY i.INDICATOR_NAME, l.LOCATION_NAME
                 """
@@ -572,20 +574,29 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                     # Create DataFrame for download
                     metadata_df = pd.DataFrame(rows, columns=columns)
 
-                    # Display descriptions with unit and location info
+                    # Display descriptions with source, units, and location info
                     # Group by indicator to show unique descriptions
                     for indicator_name in metadata_df['INDICATOR_NAME'].unique():
-                        indicator_data = metadata_df[metadata_df['INDICATOR_NAME'] == indicator_name].iloc[0]
+                        indicator_rows = metadata_df[metadata_df['INDICATOR_NAME'] == indicator_name]
+                        indicator_data = indicator_rows.iloc[0]
                         description = indicator_data.get('DESCRIPTION', None)
-                        unit = indicator_data.get('UNIT', 'N/A') or 'N/A'
-                        locations = metadata_df[metadata_df['INDICATOR_NAME'] == indicator_name]['LOCATION_NAME'].unique()
+
+                        # Get all distinct units for this indicator
+                        units = indicator_rows['UNIT'].dropna().unique()
+                        units_str = ', '.join([str(u) for u in units if u]) or 'N/A'
+
+                        # Get all distinct locations
+                        locations = indicator_rows['LOCATION_NAME'].unique()
                         locations_str = ', '.join([str(loc) for loc in locations if loc])
+
+                        # Get source (should be same for all rows of same indicator)
+                        source = indicator_data.get('SOURCE', 'N/A') or 'N/A'
 
                         st.markdown(f"""
                             <div style='background: #f8fafc; padding: 0.8rem; border-radius: 6px; margin-bottom: 0.8rem; border-left: 3px solid #3b82f6;'>
                                 <div style='font-weight: 600; color: #1e293b; margin-bottom: 0.3rem; font-size: 0.95rem;'>{indicator_name}</div>
                                 <div style='color: #64748b; font-size: 0.85rem; line-height: 1.5;'>{description if description and str(description).strip() else 'No description available'}</div>
-                                <div style='color: #475569; font-size: 0.8rem; margin-top: 0.4rem;'><strong>Unit:</strong> {unit} | <strong>Location(s):</strong> {locations_str}</div>
+                                <div style='color: #475569; font-size: 0.8rem; margin-top: 0.4rem;'><strong>Source:</strong> {source} | <strong>Unit(s):</strong> {units_str} | <strong>Location(s):</strong> {locations_str}</div>
                             </div>
                         """, unsafe_allow_html=True)
 
