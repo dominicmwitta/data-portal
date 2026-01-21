@@ -319,16 +319,58 @@ def get_data(
 def get_units(_connection):
     """
     Get list of available units from database
-    
+
     Args:
         _connection: Active Oracle connection object
-    
+
     Returns:
         List of unit names
     """
     try:
         df = pd.read_sql("SELECT DISTINCT UNIT FROM DIM_UNITS ORDER BY UNIT", _connection)
         return df['UNIT'].tolist()
+    except:
+        return []
+
+
+def get_units_for_indicators(_connection, indicator_names: list, indicator_type: str):
+    """
+    Get list of units that are actually used by the specified indicators
+    through the fact table join.
+
+    Args:
+        _connection: Active Oracle connection object
+        indicator_names: List of indicator names to filter by
+        indicator_type: 'CPI' or 'BOP' to determine which fact table to use
+
+    Returns:
+        List of unit names relevant to the selected indicators
+    """
+    if not indicator_names:
+        return []
+
+    try:
+        fact_table = "FACT_CPI" if indicator_type == "CPI" else "FACT_BOP"
+
+        # Create parameterized query
+        placeholders = ','.join([f':ind{i}' for i in range(len(indicator_names))])
+        query = f"""
+            SELECT DISTINCT u.UNIT
+            FROM {fact_table} f
+            JOIN DIM_INDICATOR i ON f.INDICATOR_ID = i.INDICATOR_ID
+            LEFT JOIN DIM_UNITS u ON f.UNIT_ID = u.UNIT_ID
+            WHERE i.INDICATOR_NAME IN ({placeholders})
+            AND u.UNIT IS NOT NULL
+            ORDER BY u.UNIT
+        """
+        params = {f'ind{i}': name for i, name in enumerate(indicator_names)}
+
+        cursor = _connection.cursor()
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        cursor.close()
+
+        return [row[0] for row in rows if row[0]]
     except:
         return []
 

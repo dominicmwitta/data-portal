@@ -16,6 +16,7 @@ try:
         get_data,
         get_locations,
         get_units,
+        get_units_for_indicators,
         test_connection,
         get_indicators
     )
@@ -26,6 +27,7 @@ except ImportError:
         get_data,
         get_locations,
         get_units,
+        get_units_for_indicators,
         test_connection,
         get_indicators
     )
@@ -509,34 +511,26 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                 help=f"Select specific {indicator_type} indicators to display"
             )
 
-            if indicator_type == "BOP":
-                bop_units = ["USD Million", "TZS Million"]
-                available_bop_units = [u for u in units if u in bop_units] if units else []
-                
-                if not available_bop_units:
-                    available_bop_units = bop_units
-                
-                default_unit = ["USD Million"] if "USD Million" in available_bop_units else (
-                    [available_bop_units[0]] if available_bop_units else []
-                )
-                
-                selected_units = st.multiselect(
-                    "Units",
-                    options=available_bop_units,
-                    default=default_unit,
-                    key=f"{indicator_type}_units_ms",
-                    placeholder="Select units",
-                    help="Balance of Payments data in USD Million or TZS Million"
-                )
+            # Get units relevant to selected indicators (from fact table join)
+            if selected_indicators:
+                available_units = get_units_for_indicators(conn, selected_indicators, indicator_type)
             else:
+                # No indicators selected - show all units for this type
+                available_units = units if units else []
+
+            if available_units:
                 selected_units = st.multiselect(
                     "Units",
-                    options=units,
+                    options=available_units,
                     default=[],
                     key=f"{indicator_type}_units_ms",
                     placeholder="All (if empty)",
-                    help="Filter by measurement units (e.g., Index, %, TZS, USD Million)"
+                    help="Units available for the selected indicators"
                 )
+            else:
+                selected_units = []
+                if selected_indicators:
+                    st.caption("No units found for selected indicators")
     
     if selected_indicators:
         with st.expander("📋 Selected Indicator Descriptions & Metadata", expanded=False):
