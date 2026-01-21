@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-economic-dashboard = "economic_dashboard.run:main"
+chota-data = "economic_dashboard.run:main"
 
 [project.urls]
 Homepage = "https://github.com/dominicmwitta/macrodatabase"
