@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "economic-indicators-dashboard"
 version = "1.0.0"
-description = "A Streamlit dashboard for CPI and Balance of Payments data"
+description = "A Streamlit dashboard for Macroeconomic data"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Dominic Mwita", email = "dominicmwitta@gmail.com"}
 ]
 dependencies = [
     "streamlit>=1.28.0",
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-chota-data = "economic_dashboard.run:main"
+chota-data = "macro_database.run:main"
 
 [project.urls]
-Homepage = "https://github.com/dominicmwitta/macrodatabase"
+Homepage = "https://github.com/dominicmwitta/data-portal.git"

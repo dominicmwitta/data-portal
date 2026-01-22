@@ -19,14 +19,14 @@ def create_windows_shortcut():
     python_exe = sys.executable
     
     # Get the package installation path
-    import economic_dashboard
-    package_path = Path(economic_dashboard.__file__).parent
+    import macro_database
+    package_path = Path(macro_database.__file__).parent
     
     # Create shortcut
     shell = Dispatch('WScript.Shell')
     shortcut = shell.CreateShortCut(str(shortcut_path))
     shortcut.Targetpath = python_exe
-    shortcut.Arguments = f'-m economic_dashboard.run'
+    shortcut.Arguments = f'-m macro_database.run'
     shortcut.WorkingDirectory = str(package_path)
     shortcut.IconLocation = python_exe
     shortcut.Description = "Economic Indicators Dashboard"

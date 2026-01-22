@@ -22,7 +22,7 @@ pip install economic-indicators-dashboard
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/economic-indicators-dashboard.git
+git clone https://github.com/dominicmwitta/data-portal.git
 cd economic-indicators-dashboard
 pip install -e .
 ```
@@ -34,19 +34,19 @@ pip install -e .
 After installation, run:
 
 ```bash
-economic-dashboard
+chota-data
 ```
 
 ### Create Desktop Shortcut
 
 **Windows:**
 ```bash
-python -m economic_dashboard.scripts.create_shortcut_windows
+python -m macro_database.scripts.create_shortcut_windows
 ```
 
 **Linux/Mac:**
 ```bash
-python -m economic_dashboard.scripts.create_shortcut_linux
+python -m macro_database.scripts.create_shortcut_linux
 ```
 
 ## Database Setup
@@ -80,24 +80,13 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-For issues and questions, please visit: https://github.com/yourusername/economic-indicators-dashboard/issues
-```
+For issues and questions, please visit: https://github.com/dominicmwitta/data-portal/issues
 
-### 8. `MANIFEST.in`
-
-```
-include README.md
-include LICENSE
-include requirements.txt
-recursive-include economic_dashboard *.py
-```
+---
 
 ## 🚀 Installation & Distribution Steps
 
-### Step 1: Organize Your Files
-
-
-### Step 2: Build the Package
+### Step 1: Build the Package
 
 ```bash
 # Install build tools
@@ -111,7 +100,7 @@ This creates:
 - `dist/economic-indicators-dashboard-1.0.0.tar.gz`
 - `dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl`
 
-### Step 3: Install Locally
+### Step 2: Install Locally
 
 ```bash
 # Install in development mode (for testing)
@@ -121,7 +110,7 @@ pip install -e .
 pip install dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl
 ```
 
-### Step 4: Create Desktop Shortcut
+### Step 3: Create Desktop Shortcut
 
 **Windows:**
 ```bash
@@ -134,7 +123,7 @@ python scripts/create_shortcut_windows.py
 python scripts/create_shortcut_linux.py
 ```
 
-### Step 5: Distribute
+### Step 4: Distribute
 
 **Option A: Share the wheel file**
 ```bash
@@ -155,7 +144,7 @@ pip install economic-indicators-dashboard
 **Option C: Private GitHub repository**
 ```bash
 # Users install with:
-pip install git+https://github.com/dominicmwitta/data-portal.git
+pip install git+https://github.com/dominicmwitta/data-portal.git@main
 ```
 
 ## 📋 Distribution Checklist
@@ -175,7 +164,5 @@ After you distribute the package, users only need to:
 
 1. Install Python 3.8+
 2. Run: `pip install economic-indicators-dashboard`
-3. Run: `economic-dashboard`
+3. Run: `chota-data`
 4. (Optional) Create desktop shortcut using the script
-
-That's it! 🎉
