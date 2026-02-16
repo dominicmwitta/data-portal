@@ -2,6 +2,7 @@ __pycache__/
 .env
 .venv/
 *.egg-info/
+dist/
 
 # Ignore images in root directory only
 /*.png
