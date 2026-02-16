@@ -1,2 +1,0 @@
-[console_scripts]
-chota-data = macro_database.run:main
