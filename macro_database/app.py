@@ -3,12 +3,16 @@ app.py - Modern Economic Indicators Dashboard (CPI & BOP) with Plotly charts
 Enhanced version with improved UI/UX and updated connection style
 """
 
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 from io import BytesIO
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     from .database import (
@@ -555,8 +559,8 @@ if not st.session_state.connected:
                 </div>
             """, unsafe_allow_html=True)
 
-            username = st.text_input("Username", value="", placeholder="Enter your username")
-            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            username = st.text_input("Username", value=os.getenv("DB_USERNAME", ""), placeholder="Enter your username")
+            password = st.text_input("Password", type="password", value=os.getenv("DB_PASSWORD", ""), placeholder="Enter your password")
 
             st.markdown("""
                 <div class="filter-section-time" style="margin: 1.5rem 0 1rem 0;">
@@ -566,14 +570,14 @@ if not st.session_state.connected:
 
             col1, col2 = st.columns(2)
             with col1:
-                host = st.text_input("Host", value="172.16.1.219",
+                host = st.text_input("Host", value=os.getenv("DB_HOST", ""),
                                    help="Database server hostname or IP",
                                    placeholder="172.16.1.219")
             with col2:
-                port = st.number_input("Port", value=1522, min_value=1, max_value=65535,
+                port = st.number_input("Port", value=int(os.getenv("DB_PORT", "1522")), min_value=1, max_value=65535,
                                      help="Database port number")
 
-            service_name = st.text_input("Service Name", value="BOT6DB",
+            service_name = st.text_input("Service Name", value=os.getenv("DB_SERVICE_NAME", ""),
                                        help="Database service name",
                                        placeholder="BOT6DB")
 

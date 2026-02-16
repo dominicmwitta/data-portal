@@ -2,13 +2,17 @@
 database.py - Database connection and query functions
 """
 
+import os
 import streamlit as st
 import oracledb
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @st.cache_resource
-def get_oracle_connection(username: str, password: str, host: str, port: int = 1522, service_name: str = "BOT6DB"):
+def get_oracle_connection(username: str, password: str, host: str, port: int = None, service_name: str = None):
     """
     Create Oracle database connection using makedsn approach
     
@@ -22,6 +26,9 @@ def get_oracle_connection(username: str, password: str, host: str, port: int = 1
     Returns:
         Connection object or None if connection fails
     """
+    port = port or int(os.getenv("DB_PORT", "1522"))
+    service_name = service_name or os.getenv("DB_SERVICE_NAME", "BOT6DB")
+
     try:
         # Create DSN using makedsn
         dsn = oracledb.makedsn(host, port, service_name=service_name)

@@ -1,4 +1,5 @@
 __pycache__/
+.env
 
 # Ignore images in root directory only
 /*.png
