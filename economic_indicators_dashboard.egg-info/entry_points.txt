@@ -1,2 +1,2 @@
 [console_scripts]
-economic-dashboard = economic_dashboard.run:main
+chota-data = macro_database.run:main

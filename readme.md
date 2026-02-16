@@ -27,6 +27,16 @@ cd economic-indicators-dashboard
 pip install -e .
 ```
 
+## Uninstall
+
+```bash
+pip uninstall economic-indicators-dashboard
+```
+
+To also remove desktop shortcuts:
+- **Windows:** Delete the shortcut from your Desktop
+- **Linux/Mac:** Remove `~/.local/share/applications/economic-dashboard.desktop`
+
 ## Usage
 
 ### Command Line
