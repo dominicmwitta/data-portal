@@ -1,5 +1,6 @@
 __pycache__/
 .env
+.venv/
 
 # Ignore images in root directory only
 /*.png
