@@ -15,5 +15,5 @@ if not _sentinel.exists():
             _sentinel.touch()
         elif created is False:
             _sentinel.touch()  # shortcut already on desktop, no need to retry
-    except Exception:
-        pass  # Will retry on next Python startup
+    except Exception as e:
+        print(f"Warning: Could not create desktop shortcut: {e}")

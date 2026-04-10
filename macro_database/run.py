@@ -38,10 +38,15 @@ def _find_script():
     found = shutil.which("get-data")
     if found:
         return Path(found)
-    # Fallback: Scripts dir next to the running Python
-    scripts_dir = Path(sys.executable).parent
+    # Fallback: find the Scripts directory next to the running Python.
+    # System Python (Windows): C:\PythonXX\python.exe  → Scripts at C:\PythonXX\Scripts
+    # Venv       (Windows): C:\venv\Scripts\python.exe → Scripts at C:\venv\Scripts
+    python_dir = Path(sys.executable).parent
     if sys.platform == 'win32':
-        scripts_dir = scripts_dir / "Scripts"
+        # If python.exe is already inside a Scripts folder (venv), don't add it again.
+        scripts_dir = python_dir if python_dir.name.lower() == 'scripts' else python_dir / 'Scripts'
+    else:
+        scripts_dir = python_dir
     for name in ("get-data.exe", "get-data"):
         candidate = scripts_dir / name
         if candidate.exists():
