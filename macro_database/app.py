@@ -605,7 +605,16 @@ if not st.session_state.connected:
             submitted = st.form_submit_button("🔌 Connect to Database", type="primary", use_container_width=True)
 
             if submitted:
-                if username and password and host and service_name:
+                username = username.strip()
+                host = host.strip()
+                service_name = service_name.strip()
+                missing = [name for name, val in [
+                    ("Username", username),
+                    ("Password", password),
+                    ("Host", host),
+                    ("Service Name", service_name),
+                ] if not val]
+                if not missing:
                     with st.spinner("🔄 Establishing connection..."):
                         try:
                             conn = get_oracle_connection(username, password, host, int(port), service_name)
@@ -625,7 +634,7 @@ if not st.session_state.connected:
                         except Exception as e:
                             st.error(f"Connection error: {str(e)}")
                 else:
-                    st.warning("Please fill in all required fields.")
+                    st.warning(f"Please fill in: {', '.join(missing)}")
     st.stop()
 
 conn = st.session_state.conn
