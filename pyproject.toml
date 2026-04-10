@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-chota-data = "macro_database.run:main"
+get-data = "macro_database.run:main"
 
 [project.urls]
 Homepage = "https://github.com/dominicmwitta/data-portal.git"

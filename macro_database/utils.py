@@ -9,27 +9,41 @@ import plotly.express as px
 
 def get_indicator_options(connection, data_group):
     """
-    Get indicator options for CPI or BOP with multiple fallback strategies
+    Get indicator options for the given data_group with multiple fallback strategies.
     """
     try:
         from .database import get_indicators
     except ImportError:
         from database import get_indicators
     
+    _map = {
+        'CONSUMER PRICE INDEX AND INFLATION': 'FACT_CPI',
+        'BALANCE OF PAYMENTS': 'FACT_BOP',
+        'MONETARY AND FINANCIAL STATISTICS': 'FACT_MONETARY',
+        'FISCAL STATISTICS': 'FACT_FISC',
+        'INTEREST RATES': 'FACT_INTEREST',
+    }
     indicator_options = []
-    
-    # Strategy 1: Use get_indicators() with section
+
+    # Strategy 1: query through fact table (avoids SECTION label mismatches)
     try:
-        df_ind = get_indicators(connection, data_group)
+        df_ind = get_indicators(connection, fact_table=_map.get(data_group))
         if not df_ind.empty:
             indicator_options = df_ind['INDICATOR_NAME'].tolist()
-            return sorted(indicator_options)  # return early if successful
+            return sorted(indicator_options)
     except Exception:
         pass
     
     # Strategy 2: Query from fact table join
     try:
-        fact_table = 'FACT_CPI' if data_group == 'CPI' else 'FACT_BOP'
+        _map = {
+            'CONSUMER PRICE INDEX AND INFLATION': 'FACT_CPI',
+            'BALANCE OF PAYMENTS': 'FACT_BOP',
+            'MONETARY AND FINANCIAL STATISTICS': 'FACT_MONETARY',
+            'FISCAL STATISTICS': 'FACT_FISC',
+            'INTEREST RATES': 'FACT_INTEREST',
+        }
+        fact_table = _map.get(data_group, 'FACT_CPI')
         query = f"""
             SELECT DISTINCT i.INDICATOR_NAME 
             FROM {fact_table} f

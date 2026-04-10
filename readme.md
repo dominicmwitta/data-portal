@@ -1,31 +1,106 @@
 # Economic Indicators Dashboard
 
-A Streamlit-based dashboard for exploring Consumer Price Index (CPI) and Balance of Payments (BOP) data from Oracle databases.
+A dashboard for exploring macroeconomic data — CPI, Balance of Payments, Monetary & Financial Statistics, Fiscal Statistics, and Interest Rates — from an Oracle database.
 
-## Features
-
-- 📊 Interactive data visualization
-- 🗓️ Calendar-based date filtering
-- 📈 Multiple aggregation levels (monthly, quarterly, annual)
-- 💾 CSV export functionality
-- 🔍 Indicator filtering
-- 🔐 Secure database connection
+---
 
 ## Installation
 
-### Quick Install
+Pick whichever method works for you.
 
+**From GitHub:**
 ```bash
-pip install economic-indicators-dashboard
+pip install git+https://github.com/dominicmwitta/data-portal.git@main
 ```
 
-### From Source
-
+**From source (development mode):**
 ```bash
 git clone https://github.com/dominicmwitta/data-portal.git
-cd economic-indicators-dashboard
+cd macro_database
 pip install -e .
 ```
+
+**From a wheel file:**
+```bash
+pip install economic_indicators_dashboard-1.0.0-py3-none-any.whl
+```
+
+After installation, a desktop shortcut called **Economic Dashboard** is created automatically the first time you run the dashboard.
+
+---
+
+## Launch the Dashboard
+
+Open a terminal and run:
+
+```bash
+get-data
+```
+
+This opens the dashboard in your browser at `http://localhost:8501`. Press `Ctrl+C` in the terminal to stop it.
+
+---
+
+## First Run — Database Connection
+
+When you open the dashboard for the first time, enter your Oracle database credentials:
+
+- **Username** — your Oracle username
+- **Password** — your Oracle password
+- **DSN** — connection string in the format `hostname:port/service_name`
+
+Your credentials are used only for the current session and are never stored.
+
+---
+
+## What You Can Do
+
+The dashboard has five tabs:
+
+| Tab | Data |
+|-----|------|
+| CPI & Inflation | Consumer price indices and inflation rates |
+| Balance of Payments | BOP summary and component data |
+| Monetary & Financial Statistics | Money supply, credit, and financial indicators |
+| Fiscal Statistics | Government revenue, expenditure, and fiscal balances |
+| Interest Rates | Lending, deposit, and policy interest rates |
+
+**Filtering options on every tab:**
+- Choose a date range (year and month)
+- Select a location
+- Pick specific indicators
+- Filter by unit of measurement
+- Choose an aggregation level: monthly, quarterly, annual, or fiscal year (July–June)
+
+**Aggregation behaviour:**
+- CPI and Interest Rate indicators are always aggregated as an **average**
+- Flow indicators (e.g. BOP flows) are summed
+- Stock indicators use the end-of-period value
+
+**Exports:**
+- Download data as CSV or Excel
+- The Excel export includes a **Metadata sheet** with indicator descriptions, definitions, units, source, and location
+
+---
+
+## Database Schema
+
+Your Oracle database must have the following tables:
+
+| Table | Contents |
+|-------|----------|
+| `FACT_CPI` | CPI and inflation fact data |
+| `FACT_BOP` | Balance of Payments fact data |
+| `FACT_MONETARY` | Monetary and financial statistics fact data |
+| `FACT_FISC` | Fiscal statistics fact data |
+| `FACT_INTEREST` | Interest rates fact data |
+| `DIM_TIME` | Time dimension |
+| `DIM_LOCATION` | Location dimension |
+| `DIM_INDICATOR` | Indicator dimension (includes `DESCRIPTION` and `DEFINITION` columns) |
+| `DIM_UNITS` | Units dimension |
+| `DIM_SOURCES` | Sources dimension |
+
+---
 
 ## Uninstall
 
@@ -33,146 +108,20 @@ pip install -e .
 pip uninstall economic-indicators-dashboard
 ```
 
-To also remove desktop shortcuts:
-- **Windows:** Delete the shortcut from your Desktop
-- **Linux/Mac:** Remove `~/.local/share/applications/economic-dashboard.desktop`
+Then delete the desktop shortcut manually:
+- **Windows:** Delete `Economic Dashboard.lnk` from your Desktop
+- **Linux:** Delete `~/.local/share/applications/economic-dashboard.desktop`
 
-## Usage
-
-### Command Line
-
-After installation, run:
-
-```bash
-chota-data
-```
-
-### Create Desktop Shortcut
-
-**Windows:**
-```bash
-python -m macro_database.scripts.create_shortcut_windows
-```
-
-**Linux/Mac:**
-```bash
-python -m macro_database.scripts.create_shortcut_linux
-```
-
-## Database Setup
-
-The dashboard requires an Oracle database with the following schema:
-
-- `FACT_CPI` - CPI fact table
-- `FACT_BOP` - Balance of Payments fact table
-- `DIM_TIME` - Time dimension
-- `DIM_LOCATION` - Location dimension
-- `DIM_INDICATOR` - Indicator dimension
-- `DIM_UNITS` - Units dimension
-
-## Configuration
-
-On first run, you'll be prompted to enter:
-- Oracle username
-- Password
-- DSN (hostname:port/service_name)
+---
 
 ## Requirements
 
 - Python 3.8+
-- Streamlit 1.28+
-- oracledb 1.4+
-- pandas 2.0+
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues and questions, please visit: https://github.com/dominicmwitta/data-portal/issues
+- Oracle database access
+- Dependencies installed automatically: `streamlit`, `oracledb`, `pandas`, `plotly`, `openpyxl`, `python-dotenv`
 
 ---
 
-## 🚀 Installation & Distribution Steps
+## Support
 
-### Step 1: Build the Package
-
-```bash
-# Install build tools
-pip install build twine
-
-# Build the package
-python -m build
-```
-
-This creates:
-- `dist/economic-indicators-dashboard-1.0.0.tar.gz`
-- `dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl`
-
-### Step 2: Install Locally
-
-```bash
-# Install in development mode (for testing)
-pip install -e .
-
-# Or install from wheel
-pip install dist/economic_indicators_dashboard-1.0.0-py3-none-any.whl
-```
-
-### Step 3: Create Desktop Shortcut
-
-**Windows:**
-```bash
-pip install pywin32 winshell
-python scripts/create_shortcut_windows.py
-```
-
-**Linux:**
-```bash
-python scripts/create_shortcut_linux.py
-```
-
-### Step 4: Distribute
-
-**Option A: Share the wheel file**
-```bash
-# Users install with:
-pip install economic_indicators_dashboard-1.0.0-py3-none-any.whl
-```
-
-**Option B: Upload to PyPI**
-```bash
-# Create account at https://pypi.org
-# Upload package
-python -m twine upload dist/*
-
-# Users install with:
-pip install economic-indicators-dashboard
-```
-
-**Option C: Private GitHub repository**
-```bash
-# Users install with:
-pip install git+https://github.com/dominicmwitta/data-portal.git@main
-```
-
-## 📋 Distribution Checklist
-
-- [ ] Test package installation in clean environment
-- [ ] Create comprehensive README with screenshots
-- [ ] Add LICENSE file (MIT recommended)
-- [ ] Test desktop shortcuts on target OS
-- [ ] Document database requirements
-- [ ] Create example configuration file
-- [ ] Add version number in code
-- [ ] Test on Windows, Linux, Mac if possible
-
-## 🎯 Quick Start for End Users
-
-After you distribute the package, users only need to:
-
-1. Install Python 3.8+
-2. Run: `pip install economic-indicators-dashboard`
-3. Run: `chota-data`
-4. (Optional) Create desktop shortcut using the script
+Report issues at: https://github.com/dominicmwitta/data-portal/issues

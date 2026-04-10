@@ -106,11 +106,12 @@ def get_data(
     wide_format=True
 ):
     """
-    Get data for CPI or BOP with flexible filtering and aggregation
-    
+    Get data for any supported indicator group with flexible filtering and aggregation.
+
     Args:
         connection: Active Oracle connection object
-        data_group: 'CPI' or 'BOP'
+        data_group: One of 'CONSUMER PRICE INDEX AND INFLATION', 'BALANCE OF PAYMENTS', 'MONETARY AND FINANCIAL STATISTICS',
+                    'FISCAL STATISTICS', 'INTEREST RATES'
         start_year: Start year for data
         end_year: End year for data
         start_month: Start month (1-12, optional)
@@ -126,20 +127,17 @@ def get_data(
     """
     cursor = connection.cursor()
 
-    map_table = {'CPI': 'FACT_CPI', 'BOP': 'FACT_BOP'}
+    map_table = {'CONSUMER PRICE INDEX AND INFLATION': 'FACT_CPI', 
+                 'BALANCE OF PAYMENTS': 'FACT_BOP', 
+                 'MONETARY AND FINANCIAL STATISTICS': 'FACT_MONETARY', 
+                 'FISCAL STATISTICS':'FACT_FISC',
+                 'INTEREST RATES':'FACT_INTEREST'}
     if data_group not in map_table:
-        st.error("Invalid data_group. Use 'CPI' or 'BOP'")
+        st.error(f"Invalid data_group '{data_group}'. Must be one of: {', '.join(map_table.keys())}")
         cursor.close()
         return pd.DataFrame()
 
     fact_table = map_table[data_group]
-    
-    # Determine aggregation function based on data type
-    # CPI: flows are averaged, BOP: flows are summed
-    if data_group == 'BOP':
-        flow_agg = 'SUM'  # BOP flows should be summed
-    else:
-        flow_agg = 'AVG'  # CPI flows should be averaged
 
     # Build query based on aggregation level
     if aggregation == 'monthly':
@@ -166,9 +164,18 @@ def get_data(
         """
     
     elif aggregation == 'quarterly':
-        # Quarterly: aggregate flows (SUM for BOP, AVG for CPI), take end-of-quarter for stocks
+        # Quarterly: CPI/Interest → AVG; FLOW → SUM, STOCK → end-of-quarter, other → AVG
+        _value_expr = (
+            "AVG(f.VALUE)"
+            if fact_table in ('FACT_CPI', 'FACT_INTEREST')
+            else """CASE
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.IS_QUARTER_END = 1 THEN f.VALUE END)
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN SUM(f.VALUE)
+                    ELSE AVG(f.VALUE)
+                END"""
+        )
         query = f"""
-            SELECT 
+            SELECT
                 t.YEAR || 'Q' || t.QUARTER AS TIME_PERIOD,
                 t.YEAR,
                 t.QUARTER,
@@ -176,11 +183,7 @@ def get_data(
                 i.INDICATOR_NAME,
                 i.INDICATOR_TYPE,
                 i.DESCRIPTION,
-                CASE 
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN {flow_agg}(f.VALUE)
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.IS_QUARTER_END = 1 THEN f.VALUE END)
-                    ELSE {flow_agg}(f.VALUE)
-                END AS VALUE,
+                {_value_expr} AS VALUE,
                 u.UNIT
             FROM {fact_table} f
             JOIN DIM_TIME t ON f.TIME_ID = t.TIME_ID
@@ -192,14 +195,23 @@ def get_data(
         """
     
     elif aggregation == 'fiscal_year':
-        # Fiscal Year (July-June): calculate fiscal year and aggregate
+        # Fiscal Year (July-June): CPI/Interest → AVG; FLOW → SUM, STOCK → June end-value, other → AVG
+        _value_expr = (
+            "AVG(f.VALUE)"
+            if fact_table in ('FACT_CPI', 'FACT_INTEREST')
+            else """CASE
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.MONTH = 6 THEN f.VALUE END)
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN SUM(f.VALUE)
+                    ELSE AVG(f.VALUE)
+                END"""
+        )
         query = f"""
-            SELECT 
-                'FY' || CASE 
+            SELECT
+                'FY' || CASE
                     WHEN t.MONTH >= 7 THEN t.YEAR || '/' || (t.YEAR + 1)
                     ELSE (t.YEAR - 1) || '/' || t.YEAR
                 END AS TIME_PERIOD,
-                CASE 
+                CASE
                     WHEN t.MONTH >= 7 THEN t.YEAR
                     ELSE t.YEAR - 1
                 END AS FISCAL_YEAR,
@@ -207,11 +219,7 @@ def get_data(
                 i.INDICATOR_NAME,
                 i.INDICATOR_TYPE,
                 i.DESCRIPTION,
-                CASE 
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN {flow_agg}(f.VALUE)
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.MONTH = 6 THEN f.VALUE END)
-                    ELSE {flow_agg}(f.VALUE)
-                END AS VALUE,
+                {_value_expr} AS VALUE,
                 u.UNIT
             FROM {fact_table} f
             JOIN DIM_TIME t ON f.TIME_ID = t.TIME_ID
@@ -227,20 +235,25 @@ def get_data(
         """
     
     else:  # annual
-        # Annual: aggregate flows (SUM for BOP, AVG for CPI), take year-end for stocks
+        # Annual: CPI/Interest → AVG; FLOW → SUM, STOCK → December end-value, other → AVG
+        _value_expr = (
+            "AVG(f.VALUE)"
+            if fact_table in ('FACT_CPI', 'FACT_INTEREST')
+            else """CASE
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.MONTH = 12 THEN f.VALUE END)
+                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN SUM(f.VALUE)
+                    ELSE AVG(f.VALUE)
+                END"""
+        )
         query = f"""
-            SELECT 
+            SELECT
                 t.YEAR AS TIME_PERIOD,
                 t.YEAR,
                 l.LOCATION_NAME,
                 i.INDICATOR_NAME,
                 i.INDICATOR_TYPE,
                 i.DESCRIPTION,
-                CASE 
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'FLOW' THEN {flow_agg}(f.VALUE)
-                    WHEN UPPER(i.INDICATOR_TYPE) = 'STOCK' THEN MAX(CASE WHEN t.MONTH = 12 THEN f.VALUE END)
-                    ELSE {flow_agg}(f.VALUE)
-                END AS VALUE,
+                {_value_expr} AS VALUE,
                 u.UNIT
             FROM {fact_table} f
             JOIN DIM_TIME t ON f.TIME_ID = t.TIME_ID
@@ -349,7 +362,7 @@ def get_units_for_indicators(_connection, indicator_names: tuple, indicator_type
     Args:
         _connection: Active Oracle connection object
         indicator_names: Tuple of indicator names to filter by (tuple for caching)
-        indicator_type: 'CPI' or 'BOP' to determine which fact table to use
+        indicator_type: Indicator group name (must be a key in MAP_TABLE) to determine which fact table to use
 
     Returns:
         List of unit names relevant to the selected indicators
@@ -358,7 +371,12 @@ def get_units_for_indicators(_connection, indicator_names: tuple, indicator_type
         return []
 
     try:
-        fact_table = "FACT_CPI" if indicator_type == "CPI" else "FACT_BOP"
+        map_table = {'CONSUMER PRICE INDEX AND INFLATION': 'FACT_CPI',
+                     'BALANCE OF PAYMENTS': 'FACT_BOP',
+                     'MONETARY AND FINANCIAL STATISTICS': 'FACT_MONETARY',
+                     'FISCAL STATISTICS': 'FACT_FISC',
+                     'INTEREST RATES': 'FACT_INTEREST'}
+        fact_table = map_table.get(indicator_type, 'FACT_CPI')
 
         # Create parameterized query
         placeholders = ','.join([f':ind{i}' for i in range(len(indicator_names))])
@@ -402,54 +420,71 @@ def get_locations(_connection):
 
 
 @st.cache_data(ttl=600)
-def get_indicators(_connection, section=None):
+def get_indicators(_connection, section=None, fact_table=None):
     """
-    Get list of available indicators from database
-    
+    Get list of available indicators from database.
+
+    When `fact_table` is provided the query joins through that fact table,
+    guaranteeing results that match the actual data regardless of how
+    DIM_INDICATOR.SECTION is labelled.  This is the preferred call pattern.
+
+    When only `section` is provided the query filters DIM_INDICATOR.SECTION
+    directly (legacy behaviour, relies on SECTION values matching).
+
     Args:
         _connection: Active Oracle connection object
-        section: Filter by section ('CPI', 'BOP', etc.')
-    
+        fact_table: Fact table name to join through (e.g. 'FACT_CPI').
+                    Takes precedence over `section` when supplied.
+        section: Filter by indicator group label stored in DIM_INDICATOR.SECTION
+                 (e.g. 'CONSUMER PRICE INDEX AND INFLATION').  Used only when
+                 fact_table is not provided.
+
     Returns:
-        DataFrame with indicator information
+        DataFrame with INDICATOR_NAME, DESCRIPTION, and DEFINITION columns.
     """
     try:
-        # Try SECTION column first, fallback to INDICATOR_TYPE
-        query = """
-            SELECT INDICATOR_NAME, DESCRIPTION, 
-                   CASE 
-                       WHEN EXISTS (SELECT 1 FROM USER_TAB_COLUMNS 
-                                    WHERE TABLE_NAME = 'DIM_INDICATOR' 
-                                    AND COLUMN_NAME = 'SECTION') 
-                       THEN SECTION 
-                       ELSE INDICATOR_TYPE 
-                   END as SECTION
-            FROM DIM_INDICATOR
-        """
+        if fact_table:
+            query = f"""
+                SELECT DISTINCT i.INDICATOR_NAME, i.DESCRIPTION, i.DEFINITION
+                FROM {fact_table} f
+                JOIN DIM_INDICATOR i ON f.INDICATOR_ID = i.INDICATOR_ID
+                ORDER BY i.INDICATOR_NAME
+            """
+            return pd.read_sql(query, _connection)
+
+        # Legacy path: filter by SECTION / INDICATOR_TYPE label
         if section:
-            # Try SECTION first, fallback to INDICATOR_TYPE
             query = """
-                SELECT INDICATOR_NAME, DESCRIPTION, SECTION
+                SELECT INDICATOR_NAME, DESCRIPTION, DEFINITION, SECTION
                 FROM DIM_INDICATOR
                 WHERE (UPPER(SECTION) = UPPER(:section)
                        OR (SECTION IS NULL AND UPPER(INDICATOR_TYPE) = UPPER(:section)))
                 ORDER BY INDICATOR_NAME
             """
-            df = pd.read_sql(query, _connection, params={'section': section})
-        else:
-            query += " ORDER BY INDICATOR_NAME"
-            df = pd.read_sql(query, _connection)
-        return df
-    except Exception as e:
-        # Fallback to simpler query
+            return pd.read_sql(query, _connection, params={'section': section})
+
+        # No filter — return everything
+        query = """
+            SELECT INDICATOR_NAME, DESCRIPTION, DEFINITION,
+                   CASE
+                       WHEN EXISTS (SELECT 1 FROM USER_TAB_COLUMNS
+                                    WHERE TABLE_NAME = 'DIM_INDICATOR'
+                                    AND COLUMN_NAME = 'SECTION')
+                       THEN SECTION
+                       ELSE INDICATOR_TYPE
+                   END AS SECTION
+            FROM DIM_INDICATOR
+            ORDER BY INDICATOR_NAME
+        """
+        return pd.read_sql(query, _connection)
+
+    except Exception:
         try:
-            query = "SELECT INDICATOR_NAME, DESCRIPTION FROM DIM_INDICATOR"
+            query = "SELECT INDICATOR_NAME, DESCRIPTION, DEFINITION FROM DIM_INDICATOR"
             if section:
                 query += " WHERE UPPER(SECTION) = UPPER(:section)"
-                df = pd.read_sql(query + " ORDER BY INDICATOR_NAME", _connection, params={'section': section})
-            else:
-                df = pd.read_sql(query + " ORDER BY INDICATOR_NAME", _connection)
-            return df
+                return pd.read_sql(query + " ORDER BY INDICATOR_NAME", _connection, params={'section': section})
+            return pd.read_sql(query + " ORDER BY INDICATOR_NAME", _connection)
         except:
             return pd.DataFrame()
 

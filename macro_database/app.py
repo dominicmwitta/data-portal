@@ -1,6 +1,6 @@
 """
-app.py - Modern Economic Indicators Dashboard (CPI & BOP) with Plotly charts
-Enhanced version with improved UI/UX and updated connection style
+app.py - Macroeconomic Database Explorer
+Supports CPI, Balance of Payments, Monetary & Financial Statistics, Fiscal Statistics, and Interest Rates
 """
 
 import os
@@ -13,6 +13,25 @@ from io import BytesIO
 from dotenv import load_dotenv
 
 load_dotenv()
+
+MAP_TABLE = {
+    'CONSUMER PRICE INDEX AND INFLATION': 'FACT_CPI',
+    'BALANCE OF PAYMENTS': 'FACT_BOP',
+    'MONETARY AND FINANCIAL STATISTICS': 'FACT_MONETARY',
+    'FISCAL STATISTICS': 'FACT_FISC',
+    'INTEREST RATES': 'FACT_INTEREST',
+}
+
+# Maps our indicator_type keys to the SECTION values actually stored in
+# DIM_INDICATOR.SECTION.  Use None for tables whose DB section code is unknown
+# — those fall back to a fact-table JOIN in get_indicators.
+DB_SECTION_MAP = {
+    'CONSUMER PRICE INDEX AND INFLATION': 'CPI',
+    'BALANCE OF PAYMENTS': 'BOP',
+    'MONETARY AND FINANCIAL STATISTICS': None,
+    'FISCAL STATISTICS': None,
+    'INTEREST RATES': None,
+}
 
 try:
     from .database import (
@@ -832,7 +851,7 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
                 # Metadata sheet (SDMX-style) - if conn available
                 if conn:
                     try:
-                        fact_table = "FACT_CPI" if indicator_type == "CPI" else "FACT_BOP"
+                        fact_table = MAP_TABLE.get(indicator_type, 'FACT_CPI')
 
                         # Get indicators from filters or extract from loaded data columns
                         selected_indicators = []
@@ -862,6 +881,7 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
                                 SELECT DISTINCT
                                     i.INDICATOR_NAME,
                                     i.DESCRIPTION,
+                                    i.DEFINITION,
                                     i.INDICATOR_TYPE,
                                     i.SECTION,
                                     u.UNIT,
@@ -903,7 +923,7 @@ def render_data_display(df: pd.DataFrame, title: str, indicator_type: str, filte
 #   Reusable Filter Component
 # ────────────────────────────────────────────────
 def render_filters(indicator_type: str, locations: list, units: list, conn):
-    """Reusable filter component for both CPI and BOP tabs"""
+    """Reusable filter component for all indicator tabs"""
 
     # Query Builder header
     st.markdown("""
@@ -1015,7 +1035,14 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
             """, unsafe_allow_html=True)
 
             try:
-                ind_df = get_indicators(conn, indicator_type)
+                db_section = DB_SECTION_MAP.get(indicator_type)
+                if db_section:
+                    # Use the DB's own SECTION code — reliable for tables
+                    # whose section label is known (CPI, BOP).
+                    ind_df = get_indicators(conn, section=db_section)
+                else:
+                    # Section code unknown — discover indicators via fact table join.
+                    ind_df = get_indicators(conn, fact_table=MAP_TABLE.get(indicator_type))
                 ind_options = sorted(ind_df['INDICATOR_NAME'].tolist()) if not ind_df.empty else []
             except Exception as e:
                 ind_options = []
@@ -1056,7 +1083,7 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
         with st.expander("📋 Selected Indicator Descriptions & Metadata", expanded=False):
             try:
                 # Determine fact table based on indicator type
-                fact_table = "FACT_CPI" if indicator_type == "CPI" else "FACT_BOP"
+                fact_table = MAP_TABLE.get(indicator_type, 'FACT_CPI')
 
                 # Build query with indicator filter
                 ind_placeholders = ','.join([f':ind{i}' for i in range(len(selected_indicators))])
@@ -1073,6 +1100,7 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                     SELECT DISTINCT
                         i.INDICATOR_NAME,
                         i.DESCRIPTION,
+                        i.DEFINITION,
                         i.INDICATOR_TYPE,
                         i.SECTION,
                         u.UNIT,
@@ -1104,6 +1132,7 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                         indicator_rows = metadata_df[metadata_df['INDICATOR_NAME'] == indicator_name]
                         indicator_data = indicator_rows.iloc[0]
                         description = indicator_data.get('DESCRIPTION', None)
+                        definition = indicator_data.get('DEFINITION', None)
 
                         # Get all distinct units for this indicator
                         units = indicator_rows['UNIT'].dropna().unique()
@@ -1116,10 +1145,17 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
                         # Get source (should be same for all rows of same indicator)
                         source = indicator_data.get('SOURCE', 'N/A') or 'N/A'
 
+                        definition_html = (
+                            f"<div style='color: #475569; font-size: 0.85rem; line-height: 1.5; margin-top: 0.3rem;'>"
+                            f"<strong>Definition:</strong> {definition}</div>"
+                            if definition and str(definition).strip() else ""
+                        )
+
                         st.markdown(f"""
                             <div style='background: #f8fafc; padding: 0.8rem; border-radius: 6px; margin-bottom: 0.8rem; border-left: 3px solid #3b82f6;'>
                                 <div style='font-weight: 600; color: #1e293b; margin-bottom: 0.3rem; font-size: 0.95rem;'>{indicator_name}</div>
                                 <div style='color: #64748b; font-size: 0.85rem; line-height: 1.5;'>{description if description and str(description).strip() else 'No description available'}</div>
+                                {definition_html}
                                 <div style='color: #475569; font-size: 0.8rem; margin-top: 0.4rem;'><strong>Source:</strong> {source} | <strong>Unit(s):</strong> {units_str} | <strong>Location(s):</strong> {locations_str}</div>
                             </div>
                         """, unsafe_allow_html=True)
@@ -1171,8 +1207,12 @@ def render_filters(indicator_type: str, locations: list, units: list, conn):
     }
 
 # ──── Tabs ──────────────────────────────────────────────────────────────────
-tab_cpi, tab_bop, tab_raw, tab_ref = st.tabs([
-    "📈 CPI", "💰 BOP", "🔧 Raw SQL", "📚 Reference Data"
+tab_cpi, tab_bop, tab_monetary, tab_fiscal, tab_interest = st.tabs([
+    "📈 CPI & Inflation",
+    "💰 Balance of Payments",
+    "🏦 Monetary & Financial",
+    "📑 Fiscal Statistics",
+    "💹 Interest Rates",
 ])
 
 # ────────────────────────────────────────────────
@@ -1183,15 +1223,15 @@ with tab_cpi:
     st.markdown("Track inflation and price changes over time")
     st.markdown("---")
 
-    filters = render_filters("CPI", locations, units, conn)
-    
+    filters = render_filters("CONSUMER PRICE INDEX AND INFLATION", locations, units, conn)
+
     st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-    
+
     if st.button("🔄 Load CPI Data", type="primary", use_container_width=True, key="load_cpi"):
         with st.spinner("📊 Querying CPI data from database..."):
             try:
                 df = get_data(
-                    conn, "CPI",
+                    conn, "CONSUMER PRICE INDEX AND INFLATION",
                     start_year=filters['start_year'],
                     end_year=filters['end_year'],
                     start_month=filters['start_month'],
@@ -1202,28 +1242,28 @@ with tab_cpi:
                     aggregation=filters['aggregation'],
                     wide_format=True
                 )
-                render_data_display(df, "Consumer Price Index (CPI)", "CPI", filters, conn)
+                render_data_display(df, "Consumer Price Index and Inflation", "CONSUMER PRICE INDEX AND INFLATION", filters, conn)
             except Exception as e:
                 st.error(f"Error loading CPI data: {str(e)}")
                 st.info("Please check your database connection and filter settings.")
 
 # ────────────────────────────────────────────────
-#   BOP Tab
+#   Balance of Payments Tab
 # ────────────────────────────────────────────────
 with tab_bop:
-    st.markdown("### Balance of Payments (BOP)")
+    st.markdown("### Balance of Payments")
     st.markdown("Analyze international transactions and foreign exchange flows")
     st.markdown("---")
 
-    filters = render_filters("BOP", locations, units, conn)
-    
+    filters = render_filters("BALANCE OF PAYMENTS", locations, units, conn)
+
     st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-    
+
     if st.button("🔄 Load BOP Data", type="primary", use_container_width=True, key="load_bop"):
-        with st.spinner("📊 Querying BOP data from database..."):
+        with st.spinner("📊 Querying Balance of Payments data from database..."):
             try:
                 df = get_data(
-                    conn, "BOP",
+                    conn, "BALANCE OF PAYMENTS",
                     start_year=filters['start_year'],
                     end_year=filters['end_year'],
                     start_month=filters['start_month'],
@@ -1234,112 +1274,106 @@ with tab_bop:
                     aggregation=filters['aggregation'],
                     wide_format=True
                 )
-                render_data_display(df, "Balance of Payments (BOP)", "BOP", filters, conn)
+                render_data_display(df, "Balance of Payments", "BALANCE OF PAYMENTS", filters, conn)
             except Exception as e:
-                st.error(f"Error loading BOP data: {str(e)}")
+                st.error(f"Error loading Balance of Payments data: {str(e)}")
                 st.info("Please check your database connection and filter settings.")
 
 # ────────────────────────────────────────────────
-#   Raw SQL Tab
+#   Monetary and Financial Statistics Tab
 # ────────────────────────────────────────────────
-with tab_raw:
-    st.markdown("### 🔧 Raw SQL Query Interface")
-    st.markdown("Execute custom SQL queries directly on the database")
+with tab_monetary:
+    st.markdown("### Monetary and Financial Statistics")
+    st.markdown("Analyze money supply, credit, and financial sector data")
     st.markdown("---")
-    
-    st.warning("**Advanced users only**. Be careful with write operations.")
-    
-    sql_query = st.text_area(
-        "SQL Query",
-        height=200,
-        placeholder="SELECT * FROM your_table WHERE...",
-        help="Enter your SQL query here. Read-only queries are recommended."
-    )
-    
-    col_exec, col_clear = st.columns([1, 4])
-    with col_exec:
-        execute_btn = st.button("▶️ Execute", type="primary", use_container_width=True)
-    with col_clear:
-        if st.button("🗑️ Clear", use_container_width=True):
-            st.rerun()
-    
-    if execute_btn and sql_query.strip():
-        try:
-            with st.spinner("Executing query..."):
-                df_result = pd.read_sql(sql_query, conn)
-                
-                st.success(f"Query executed successfully! Returned {len(df_result)} rows.")
-                
-                if not df_result.empty:
-                    st.dataframe(df_result, use_container_width=True, hide_index=False)
-                    
-                    csv = df_result.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        "📥 Download Results as CSV",
-                        csv,
-                        f"query_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        "text/csv"
-                    )
-                else:
-                    st.info("Query executed but returned no results.")
-        except Exception as e:
-            st.error(f"Query error: {str(e)}")
-    elif execute_btn:
-        st.warning("Please enter a SQL query first.")
+
+    filters = render_filters("MONETARY AND FINANCIAL STATISTICS", locations, units, conn)
+
+    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+
+    if st.button("🔄 Load Monetary Data", type="primary", use_container_width=True, key="load_monetary"):
+        with st.spinner("📊 Querying Monetary and Financial Statistics from database..."):
+            try:
+                df = get_data(
+                    conn, "MONETARY AND FINANCIAL STATISTICS",
+                    start_year=filters['start_year'],
+                    end_year=filters['end_year'],
+                    start_month=filters['start_month'],
+                    end_month=filters['end_month'],
+                    location=filters['location'],
+                    indicator_names=filters['selected_indicators'],
+                    unit_names=filters['selected_units'],
+                    aggregation=filters['aggregation'],
+                    wide_format=True
+                )
+                render_data_display(df, "Monetary and Financial Statistics", "MONETARY AND FINANCIAL STATISTICS", filters, conn)
+            except Exception as e:
+                st.error(f"Error loading Monetary and Financial Statistics: {str(e)}")
+                st.info("Please check your database connection and filter settings.")
 
 # ────────────────────────────────────────────────
-#   Reference Data Tab
+#   Fiscal Statistics Tab
 # ────────────────────────────────────────────────
-with tab_ref:
-    st.markdown("### 📚 Reference Data & Metadata")
-    st.markdown("View available locations, indicators, units, and other reference information")
+with tab_fiscal:
+    st.markdown("### Fiscal Statistics")
+    st.markdown("Analyze government revenues, expenditures and fiscal position")
     st.markdown("---")
-    
-    ref_tabs = st.tabs(["📍 Locations", "📊 CPI Indicators", "💰 BOP Indicators", "📏 Units"])
-    
-    # Locations
-    with ref_tabs[0]:
-        st.markdown("#### Available Locations")
-        if locations:
-            loc_df = pd.DataFrame({"Location": locations})
-            st.dataframe(loc_df, use_container_width=True, hide_index=True)
-        else:
-            st.info("No location data available")
-    
-    # CPI Indicators
-    with ref_tabs[1]:
-        st.markdown("#### CPI Indicators")
-        try:
-            cpi_ind = get_indicators(conn, 'CPI')
-            if not cpi_ind.empty:
-                st.dataframe(cpi_ind, use_container_width=True, hide_index=True)
-                st.caption(f"Total: {len(cpi_ind)} CPI indicators")
-            else:
-                st.info("No CPI indicators found")
-        except Exception as e:
-            st.error(f"Error loading CPI indicators: {e}")
-    
-    # BOP Indicators
-    with ref_tabs[2]:
-        st.markdown("#### BOP Indicators")
-        try:
-            bop_ind = get_indicators(conn, 'BOP')
-            if not bop_ind.empty:
-                st.dataframe(bop_ind, use_container_width=True, hide_index=True)
-                st.caption(f"Total: {len(bop_ind)} BOP indicators")
-            else:
-                st.info("No BOP indicators found")
-        except Exception as e:
-            st.error(f"Error loading BOP indicators: {e}")
-    
-    # Units
-    with ref_tabs[3]:
-        st.markdown("#### Measurement Units")
-        if units:
-            units_df = pd.DataFrame({"Unit": units})
-            st.dataframe(units_df, use_container_width=True, hide_index=True)
-        else:
-            st.info("No unit data available")
+
+    filters = render_filters("FISCAL STATISTICS", locations, units, conn)
+
+    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+
+    if st.button("🔄 Load Fiscal Data", type="primary", use_container_width=True, key="load_fiscal"):
+        with st.spinner("📊 Querying Fiscal Statistics from database..."):
+            try:
+                df = get_data(
+                    conn, "FISCAL STATISTICS",
+                    start_year=filters['start_year'],
+                    end_year=filters['end_year'],
+                    start_month=filters['start_month'],
+                    end_month=filters['end_month'],
+                    location=filters['location'],
+                    indicator_names=filters['selected_indicators'],
+                    unit_names=filters['selected_units'],
+                    aggregation=filters['aggregation'],
+                    wide_format=True
+                )
+                render_data_display(df, "Fiscal Statistics", "FISCAL STATISTICS", filters, conn)
+            except Exception as e:
+                st.error(f"Error loading Fiscal Statistics: {str(e)}")
+                st.info("Please check your database connection and filter settings.")
+
+# ────────────────────────────────────────────────
+#   Interest Rates Tab
+# ────────────────────────────────────────────────
+with tab_interest:
+    st.markdown("### Interest Rates")
+    st.markdown("Track lending, deposit and policy interest rates")
+    st.markdown("---")
+
+    filters = render_filters("INTEREST RATES", locations, units, conn)
+
+    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+
+    if st.button("🔄 Load Interest Rate Data", type="primary", use_container_width=True, key="load_interest"):
+        with st.spinner("📊 Querying Interest Rates from database..."):
+            try:
+                df = get_data(
+                    conn, "INTEREST RATES",
+                    start_year=filters['start_year'],
+                    end_year=filters['end_year'],
+                    start_month=filters['start_month'],
+                    end_month=filters['end_month'],
+                    location=filters['location'],
+                    indicator_names=filters['selected_indicators'],
+                    unit_names=filters['selected_units'],
+                    aggregation=filters['aggregation'],
+                    wide_format=True
+                )
+                render_data_display(df, "Interest Rates", "INTEREST RATES", filters, conn)
+            except Exception as e:
+                st.error(f"Error loading Interest Rates: {str(e)}")
+                st.info("Please check your database connection and filter settings.")
 
 # ────────────────────────────────────────────────
 #   Sidebar (Enhanced)
@@ -1456,7 +1490,7 @@ with st.sidebar:
     with st.expander("📊 Quick Stats", expanded=False):
         st.markdown("""
             <div style='background: rgba(16, 185, 129, 0.15); padding: 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);'>
-                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Tables:</strong> CPI, BOP, + More Coming</p>
+                <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Tables:</strong> CPI, BOP, Monetary, Fiscal, Interest Rates</p>
                 <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Coverage:</strong> Tanzania Macroeconomic Data</p>
                 <p style='margin: 0.5rem 0; color: #e2e8f0; font-size: 0.85rem;'><strong>Status:</strong> Active & Expanding</p>
             </div>
